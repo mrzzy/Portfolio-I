@@ -31,9 +31,9 @@ class Scanner:
             (error, tag_type) = self.backend.request()
             if not error:
                 # Retreive RFID UID for card tag 
-                (error, uid) = rdr.anticoll()
+                (error, uid) = self.backend.anticoll()
                 if not error:
-                    rfid = "".join(uid)
+                    rfid = "".join([str(idf) for idf in uid])
                     print("read rfid: ", rfid)
                     return rfid
 
