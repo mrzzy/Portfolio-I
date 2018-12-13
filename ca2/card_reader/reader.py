@@ -21,7 +21,7 @@ class Scanner:
             # Wait for a card tag to be place on the tag
             self.backend.wait_for_tag()
             # Request card tag
-            (error, tag_type) = self.error.request()
+            (error, tag_type) = self.backend.request()
             if not error:
                 # Retreive RFID UID for card tag 
                 (error, uid) = rdr.anticoll()
