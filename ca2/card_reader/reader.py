@@ -5,27 +5,32 @@
 # P1 CA2
 #
 
+from pirc522 import RFID
+
+# Represents a scanner for RFID cards
+class Scanner:
+    def __init__(self):
+        self.backend = RFID()
+
+    # Waits for an card to be placed on the rfid reader
+    # and reads the RFID on the card
+    # Returns the RFID on the card as a string
+    def read(self):
+        while True:
+            print("waiting for card...")
+            # Wait for a card tag to be place on the tag
+            self.backend.wait_for_tag()
+            # Request card tag
+            (error, tag_type) = self.error.request()
+            if not error:
+                # Retreive RFID UID for card tag 
+                (error, uid) = rdr.anticoll()
+                if not error:
+                    rfid = "".join(uid)
+                    print("read rfid: ", rfid)
+                    return rfid
+
 if __name__ == "__main__":
-    from pirc522 import RFID
-    rdr = RFID()
-
+    scanner = Scanner()
     while True:
-      rdr.wait_for_tag()
-      (error, tag_type) = rdr.request()
-      if not error:
-        print("Tag detected")
-        (error, uid) = rdr.anticoll()
-        if not error:
-          print("UID: " + str(uid))
-          # Select Tag is required before Auth
-          if not rdr.select_tag(uid):
-            # Auth for block 10 (block 2 of sector 2) using default shipping key A
-            if not rdr.card_auth(rdr.auth_a, 10, [0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF], uid):
-              # This will print something like (False, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
-              print("Reading block 10: " + str(rdr.read(10)))
-              # Always stop crypto1 when done working
-              rdr.stop_crypto()
-
-    # Calls GPIO cleanup
-    rdr.cleanup()
-
+        scanner.read()
