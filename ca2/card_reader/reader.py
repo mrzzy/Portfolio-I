@@ -115,19 +115,41 @@ class Authenticator:
     # Register the RFID into the of reconignised RFIDs
     # Commit specifies whether to commit state to the cloud
     def register(self, rfid, commit=True):
-        # Add RFID hash to known hashes
-        id_hash = self.hashify(rfid)
-        self.known_hashes.append(id_hash)
-        
-        if commit:
-            # Store known hashes in the cloud
-            self.db.store('authenticator-hashes', self.known_hashes)
-            self.db.commit()
+        if not rfid in self.known_hashes:
+            # Add RFID hash to known hashes
+            id_hash = self.hashify(rfid)
+            self.known_hashes.append(id_hash)
             
+            if commit:
+                # Store known hashes in the cloud
+                self.db.store('authenticator-hashes', self.known_hashes)
+                self.db.commit()
+                
 
 if __name__ == "__main__":
     red_led = LED(21)
-    gren_led = LED(20)
-    button = Button(26)
+    green_led = LED(20)
+    button = Button(19)
+    
+    auth = Authenticator()
+    scanner = Scanner()
 
-    button.when_pressed = red_led.on
+    while True: # Run Loop
+        rfid = scanner.read()
+        if button.is_pressed:
+            # Registration mode
+            auth.register(rfid)
+        else:
+            # Check mode
+            if auth.verify(rfid):
+                green_led.on()
+                time.sleep(5)
+                green_led.off()
+            else:
+                red_led.on()
+                time.sleep(5)
+                red_led.off()
+        
+                
+        
+        
