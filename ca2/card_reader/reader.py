@@ -139,16 +139,19 @@ if __name__ == "__main__":
         if button.is_pressed:
             # Registration mode
             auth.register(rfid)
+            print("registered. {}".format(rfid))
         else:
             # Check mode
             if auth.verify(rfid):
                 green_led.on()
                 time.sleep(5)
                 green_led.off()
+                print("Approved.")
             else:
                 red_led.on()
                 time.sleep(5)
                 red_led.off()
+                print("Rejected.")
         
                 
         
