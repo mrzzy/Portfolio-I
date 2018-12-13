@@ -9,7 +9,7 @@ import requests
 import json
 import hashlib
 import atexit
-#from pirc522 import RFID
+from pirc522 import RFID
 from gpiozero import Button, LED
 
 FIREBASE_DB_URL = "https://cardreader-93045.firebaseio.com/"
