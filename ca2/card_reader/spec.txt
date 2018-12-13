@@ -16,3 +16,4 @@ Authenticator
 RemoteStorage
     - store(key, value)
     - retrieve(key)
+    - delete(key)
