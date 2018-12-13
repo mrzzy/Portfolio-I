@@ -10,6 +10,7 @@ import json
 import hashlib
 import atexit
 #from pirc522 import RFID
+from gpiozero import Button, LED
 
 FIREBASE_DB_URL = "https://cardreader-93045.firebaseio.com/"
 
@@ -125,4 +126,8 @@ class Authenticator:
             
 
 if __name__ == "__main__":
-    auth = Authenticator()
+    red_led = LED(21)
+    gren_led = LED(20)
+    button = Button(26)
+
+    button.when_pressed = red_led.on
