@@ -1,0 +1,18 @@
+Card Reader design specification
+- be able to read cards using RFID reader
+- registers certain cards as legitimate users 
+- upload legitimate users to the cloud
+- check users against users in the cloud
+    - light up green led for 5 sec
+    - light up red led for 5 sec
+
+Scanner 
+    - scan() -> RFID
+
+Authenticator
+    - verify(rfid) -> bool
+    - register(rfid)
+    
+RemoteStorage
+    - store(key, value)
+    - retrieve(key)
