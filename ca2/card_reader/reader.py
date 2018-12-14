@@ -174,6 +174,6 @@ if __name__ == "__main__":
             print("Registration mode.")
             print("Waiting for card...")
             rfid = scanner.read()
-            auth.register()
+            auth.register(rfid)
             print("Registered card: ", rfid)
         
