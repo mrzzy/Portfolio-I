@@ -16,6 +16,8 @@ from multiprocessing import Pool, Manager
 
 FIREBASE_DB_URL = "https://cardreader-93045.firebaseio.com/"
 
+GPIO.setmode(GPIO.BCM)
+
 # Represents a scanner for RFID cards
 class Scanner:
     def __init__(self):
