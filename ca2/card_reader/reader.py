@@ -62,8 +62,8 @@ class RemoteDB:
         # Retrieve data from remote database
         r = requests.get(self.storage_url)
         if r.status_code == 200:
-            self.data = list(r.json().values())[0]
-
+            request_data = r.json()
+            if request_data: self.data = list(r.json().values())[0] 
     # Stores the given key and value pair into the remote database
     # Returns True if storage successful, otherwise false
     def store(self, key, value):
