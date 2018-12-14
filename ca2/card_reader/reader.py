@@ -28,7 +28,6 @@ class Scanner:
     # Returns the RFID on the card as a string
     def read(self):
         while True:
-            print("waiting for card...")
             # Wait for a card tag to be place on the tag
             self.backend.wait_for_tag()
             # Request card tag
@@ -38,7 +37,6 @@ class Scanner:
                 (error, uid) = self.backend.anticoll()
                 if not error:
                     rfid = "".join([str(idf) for idf in uid])
-                    print("read rfid: ", rfid)
                     return rfid
 
 # Represents a remote key value database backed by a firebase
@@ -96,11 +94,13 @@ class Authenticator:
     # The restore flag detemine if the authenticator restores its cloud backed 
     # state
     def __init__(self, restore=True):
-        self.known_hashes = [] # List of accepted hashes
-        self.db = RemoteDB() # Clound backed DB
+        self.manager = Manager()
+        self.known_hashes = self.manager.list() # List of accepted hashes
+        self.db = RemoteDB() # Cloud backed DB
         if restore:
             try:
-                self.known_hashes = self.db.retrieve("authenticator-hashes")
+                restore_hashes = self.db.retrieve("authenticator-hashes")
+                self.known_hashes.extend(restore_hashes)
             except KeyError:
                 print("Failed to restore...")
             
@@ -141,18 +141,20 @@ class Button:
         # Listen for button events asyncronously
         pool = Pool(1)
         pool.apply_async(self.listen)
-        
-    
+
     # Listen for button events
-    def listen(self):
+    def listen(self, delay=0.5):
         while True:
             # Button is press when state is low
             state = GPIO.input(self.pin)
             if state == GPIO.LOW: self.trigger()
+            
+            time.sleep(deplay)
 
     # Trigger the button, running all its event handlers
     def trigger(self):
         for handler in self.handlers: handler()
+    
 
 # Rerpresents an GPIO based LED
 class LED:
@@ -175,38 +177,29 @@ if __name__ == "__main__":
     green_led = LED(20)
     red_led = LED(21)
             
-    def handle_press():
-        print("Button pressed!")
-    
-    button = Button(19, handlers=[ handle_press ])
+    # Register Card on RFID press
+    scanner = Scanner()
+    auth = Authenticator()
+    def register_card():
+        print("Registration mode.")
+        print("Waiting for card...")
+        rfid = scanner.read()
+        auth.register()
+        print("Registered card: ", rfid)
+    button = Button(19, handlers=[ register_card ])
 
-    while True:
-        green_led.on()
-        red_led.off()
-        time.sleep(1)
-        red_led.on()
-        green_led.off()
-        time.sleep(1)
-
-    #while True: # Run Loop
-    #    rfid = scanner.read()
-    #    if button.is_pressed:
-    #        # Registration mode
-    #        auth.register(rfid)
-    #        print("registered. {}".format(rfid))
-    #    else:
-    #        # Check mode
-    #        if auth.verify(rfid):
-    #            green_led.on()
-    #            time.sleep(5)
-    #            green_led.off()
-    #            print("Approved.")
-    #        else:
-    #            red_led.on()
-    #            time.sleep(5)
-    #            red_led.off()
-    #            print("Rejected.")
-    #    
-                
-        
-        
+    while True: # Run Loop
+        print("Waiting for card...")
+        rfid = scanner.read()
+        print("Checking {} ...".format(rfid))
+        # Check mode
+        if auth.verify(rfid):
+            green_led.on()
+            time.sleep(5)
+            green_led.off()
+            print("Approved.")
+        else:
+            red_led.on()
+            time.sleep(5)
+            red_led.off()
+            print("Rejected.")
