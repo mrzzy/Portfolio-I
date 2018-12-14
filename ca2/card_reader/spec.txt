@@ -17,3 +17,12 @@ RemoteStorage
     - store(key, value)
     - retrieve(key)
     - delete(key)
+
+=== GPIO implementations because GPIO zero does not work properly ===
+LED
+    - on()
+    - off()
+
+Button
+    - register(handler)
+    - deregister(handler)

@@ -9,8 +9,10 @@ import requests
 import json
 import hashlib
 import atexit
+import RPi.GPIO as GPIO
+import time
 from pirc522 import RFID
-from gpiozero import Button, LED
+from multiprocessing import Pool, Manager
 
 FIREBASE_DB_URL = "https://cardreader-93045.firebaseio.com/"
 
@@ -43,7 +45,7 @@ class RemoteDB:
         self.storage_url = "{}/{}".format(FIREBASE_DB_URL, storage_file)
         self.data = {} #  Lazy load data only on retrieve
         self.hasChanges = False
-        
+    
     # Commit changes made to local data into the remote database 
     def commit(self):
         if self.hasChanges:
@@ -125,34 +127,98 @@ class Authenticator:
                 self.db.store('authenticator-hashes', self.known_hashes)
                 self.db.commit()
                 
+# Represents an GPIO based button
+class Button:
+    # Create a new button on the given PIN
+    def __init__(self, pin):
+        # Setup button pin
+        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        self.pin = pin
+    
+        # Listen for button events asyncronously
+        pool = Pool(1)
+        pool.apply_async(self.listen)
+        
+        # Create shared handler list
+        self.manager = Manager()
+        self.handlers = self.manager.list()
+    
+    # Listen for button events
+    def listen(self):
+        while True:
+            is_button_triggered = GPIO.input(self.pin)
+            if is_button_triggered:
+                # Run event handlers
+                self.trigger()
+    # Register the given handler as an button click handler, run when the button
+    # is triggered
+    def register(self, handler):
+        if handler not in self.handlers:
+            self.handlers.append(handler)
+            
+            
+    # Remove a previously registered handler
+    # If the handler was not actually registered, does nothing
+    def deregister(self, handler):
+        self.handlers.remove(handler)
+    
+
+    # Trigger the button, running all its event handlers
+    def trigger(self):
+        for handler in self.handlers: handler()
+
+# Rerpresents an GPIO based LED
+class LED:
+    # Create a new LED on the given PIN
+    def __init__(self, pin):
+        # Setup LED pin
+        GPIO.setup(pin, GPIO.OUT)
+        self.pin = pin
+
+    # Turn on the LED 
+    def on(self):
+        GPIO.output(self.pin, GPIO.HIGH)
+
+    # Turn off the LED 
+    def off(self):
+        GPIO.output(self.pin, GPIO.LOW)
+        
 
 if __name__ == "__main__":
-    red_led = LED(21)
     green_led = LED(20)
+    red_led = LED(21)
     button = Button(19)
-    
-    auth = Authenticator()
-    scanner = Scanner()
+            
+    def handle_press():
+        print("Button pressed!")
+    button.register(handle_press)
 
-    while True: # Run Loop
-        rfid = scanner.read()
-        if button.is_pressed:
-            # Registration mode
-            auth.register(rfid)
-            print("registered. {}".format(rfid))
-        else:
-            # Check mode
-            if auth.verify(rfid):
-                green_led.on()
-                time.sleep(5)
-                green_led.off()
-                print("Approved.")
-            else:
-                red_led.on()
-                time.sleep(5)
-                red_led.off()
-                print("Rejected.")
-        
+    while True:
+        green_led.on()
+        red_led.off()
+        time.sleep(1)
+        red_led.on()
+        green_led.off()
+
+    #while True: # Run Loop
+    #    rfid = scanner.read()
+    #    if button.is_pressed:
+    #        # Registration mode
+    #        auth.register(rfid)
+    #        print("registered. {}".format(rfid))
+    #    else:
+    #        # Check mode
+    #        if auth.verify(rfid):
+    #            green_led.on()
+    #            time.sleep(5)
+    #            green_led.off()
+    #            print("Approved.")
+    #        else:
+    #            red_led.on()
+    #            time.sleep(5)
+    #            red_led.off()
+    #            print("Rejected.")
+    #    
                 
         
         
