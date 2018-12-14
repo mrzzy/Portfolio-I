@@ -146,10 +146,9 @@ class Button:
     # Listen for button events
     def listen(self):
         while True:
-            is_button_triggered = GPIO.input(self.pin)
-            if is_button_triggered:
-                # Run event handlers
-                self.trigger()
+            # Button is press when state is low
+            state = GPIO.input(self.pin)
+            if state == GPIO.LOW: self.trigger()
 
     # Trigger the button, running all its event handlers
     def trigger(self):
@@ -187,6 +186,7 @@ if __name__ == "__main__":
         time.sleep(1)
         red_led.on()
         green_led.off()
+        time.sleep(1)
 
     #while True: # Run Loop
     #    rfid = scanner.read()
