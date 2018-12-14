@@ -16,7 +16,7 @@ from multiprocessing import Pool, Manager
 
 FIREBASE_DB_URL = "https://cardreader-93045.firebaseio.com/"
 
-GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.Board)
 
 # Represents a scanner for RFID cards
 class Scanner:
@@ -174,8 +174,8 @@ class LED:
         
 
 if __name__ == "__main__":
-    green_led = LED(20)
-    red_led = LED(21)
+    green_led = LED(38)
+    red_led = LED(40)
             
     # Register Card on RFID press
     scanner = Scanner()
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         rfid = scanner.read()
         auth.register()
         print("Registered card: ", rfid)
-    button = Button(19, handlers=[ register_card ])
+    button = Button(35, handlers=[ register_card ])
 
     while True: # Run Loop
         print("Waiting for card...")
