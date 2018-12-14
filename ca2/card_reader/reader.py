@@ -132,7 +132,8 @@ class Authenticator:
 # Represents an GPIO based button
 class Button:
     # Create a new button on the given PIN
-    def __init__(self, pin):
+    def __init__(self, pin, handlers):
+        self.handlers = handlers
         # Setup button pin
         GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         self.pin = pin
@@ -141,9 +142,6 @@ class Button:
         pool = Pool(1)
         pool.apply_async(self.listen)
         
-        # Create shared handler list
-        self.manager = Manager()
-        self.handlers = self.manager.list()
     
     # Listen for button events
     def listen(self):
@@ -152,18 +150,6 @@ class Button:
             if is_button_triggered:
                 # Run event handlers
                 self.trigger()
-    # Register the given handler as an button click handler, run when the button
-    # is triggered
-    def register(self, handler):
-        if handler not in self.handlers:
-            self.handlers.append(handler)
-            
-            
-    # Remove a previously registered handler
-    # If the handler was not actually registered, does nothing
-    def deregister(self, handler):
-        self.handlers.remove(handler)
-    
 
     # Trigger the button, running all its event handlers
     def trigger(self):
@@ -189,11 +175,11 @@ class LED:
 if __name__ == "__main__":
     green_led = LED(20)
     red_led = LED(21)
-    button = Button(19)
             
     def handle_press():
         print("Button pressed!")
-    button.register(handle_press)
+    
+    button = Button(19, handlers=[ handle_press ])
 
     while True:
         green_led.on()
