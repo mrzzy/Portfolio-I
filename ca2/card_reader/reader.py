@@ -12,7 +12,6 @@ import atexit
 import RPi.GPIO as GPIO
 import time
 from pirc522 import RFID
-from multiprocessing import Pool, Manager
 
 FIREBASE_DB_URL = "https://cardreader-93045.firebaseio.com/"
 
@@ -94,8 +93,7 @@ class Authenticator:
     # The restore flag detemine if the authenticator restores its cloud backed 
     # state
     def __init__(self, restore=True):
-        self.manager = Manager()
-        self.known_hashes = self.manager.list() # List of accepted hashes
+        self.known_hashes = [] # List of accepted hashes
         self.db = RemoteDB() # Cloud backed DB
         if restore:
             try:
@@ -129,33 +127,7 @@ class Authenticator:
                 self.db.store('authenticator-hashes', self.known_hashes)
                 self.db.commit()
                 
-# Represents an GPIO based button
-class Button:
-    # Create a new button on the given PIN
-    def __init__(self, pin, handlers):
-        self.handlers = handlers
-        # Setup button pin
-        GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
-        self.pin = pin
     
-        # Listen for button events asyncronously
-        pool = Pool(1)
-        pool.apply_async(self.listen)
-
-    # Listen for button events
-    def listen(self, delay=0.5):
-        while True:
-            # Button is press when state is low
-            state = GPIO.input(self.pin)
-            if state == GPIO.LOW: self.trigger()
-            
-            time.sleep(deplay)
-
-    # Trigger the button, running all its event handlers
-    def trigger(self):
-        for handler in self.handlers: handler()
-    
-
 # Rerpresents an GPIO based LED
 class LED:
     # Create a new LED on the given PIN
@@ -177,29 +149,31 @@ if __name__ == "__main__":
     green_led = LED(38)
     red_led = LED(40)
             
-    # Register Card on RFID press
     scanner = Scanner()
     auth = Authenticator()
-    def register_card():
-        print("Registration mode.")
-        print("Waiting for card...")
-        rfid = scanner.read()
-        auth.register()
-        print("Registered card: ", rfid)
-    button = Button(35, handlers=[ register_card ])
 
+    print("To register cards: press ctrl-c")
     while True: # Run Loop
-        print("Waiting for card...")
-        rfid = scanner.read()
-        print("Checking {} ...".format(rfid))
-        # Check mode
-        if auth.verify(rfid):
-            print("Approved.")
-            green_led.on()
-            time.sleep(5)
-            green_led.off()
-        else:
-            print("Rejected.")
-            red_led.on()
-            time.sleep(5)
-            red_led.off()
+        try:
+            print("Waiting for card...")
+            rfid = scanner.read()
+            print("Checking {} ...".format(rfid))
+            # Check mode
+            if auth.verify(rfid):
+                print("Approved.")
+                green_led.on()
+                time.sleep(5)
+                green_led.off()
+            else:
+                print("Rejected.")
+                red_led.on()
+                time.sleep(5)
+                red_led.off()
+        except KeyboardInterrupt:
+            # Register Card on keyboard interupt
+            print("Registration mode.")
+            print("Waiting for card...")
+            rfid = scanner.read()
+            auth.register()
+            print("Registered card: ", rfid)
+        
