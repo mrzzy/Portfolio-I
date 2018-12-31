@@ -1,0 +1,3 @@
+spidev
+pi-rc522
+requests
