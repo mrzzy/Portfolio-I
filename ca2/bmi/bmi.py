@@ -11,6 +11,7 @@ import os
 import shutil
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.neighbors import KNeighborsClassifier
+from mlxtend.plotting import plot_decision_regions
 
 # Plot a histogram with the given data and bin_size and colpor
 def plot_hist(x, bin_size, color, label):
@@ -99,14 +100,21 @@ if __name__ == "__main__":
             labels.append(i)
             features.append(bmi)
              
-    labels = np.reshape(labels, (-1, 1))
+    labels = np.asarray(labels)
     features = np.reshape(features, (-1, 1))
     
     # Train KNN model on data
-    model = KNeighborsClassifier(n_neighbors=3)
+    model = KNeighborsClassifier(n_neighbors=5)
     model.fit(features, labels)
     print(features.shape, labels.shape)
+
+    # Plot decision boardaries of model
+    plt.title("KNN Decision Boardaries")
+    plot_decision_regions(X=features, y=labels, clf=model, legend=2)
+    plt.xlim((0, 600))
+    plt.show()
     
+    # Interractive client to predict region given height and weight
     while True:
         height = float(input("Enter height: "))
         weight = float(input("Enter weight: "))
