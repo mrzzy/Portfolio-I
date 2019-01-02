@@ -1,9 +1,3 @@
-#
-# bmi.py
-# Portfolio I
-# Data Science with BMI data
-#
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -12,6 +6,12 @@ import shutil
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.neighbors import KNeighborsClassifier
 from mlxtend.plotting import plot_decision_regions
+
+
+# Portfolio I (Question 3) bmi.py
+
+# Data Science with BMI data
+
 
 # Plot a histogram with the given data and bin_size and colpor
 def plot_hist(x, bin_size, color, label):
@@ -93,6 +93,7 @@ if __name__ == "__main__":
     
     ## 3. Machine Learning
     # Construct dataset
+    
     labels = []
     features = []
     for i, region in enumerate(regions):
@@ -116,6 +117,7 @@ if __name__ == "__main__":
     
     # Interractive client to predict region given height and weight
     while True:
+
         height = float(input("Enter height: "))
         weight = float(input("Enter weight: "))
         
