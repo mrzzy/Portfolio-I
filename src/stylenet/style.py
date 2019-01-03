@@ -15,8 +15,7 @@ from shutil import rmtree
 from scipy.optimize import fmin_l_bfgs_b
 
 # Style transfer settings
-IMAGE_DIM = (128, 128)
-IMAGE_SHAPE = IMAGE_DIM + (3,)
+IMAGE_SHAPE = (128, 128, 3)
 INPUT_SHAPE = (None,) + IMAGE_SHAPE
 
 # Loss computation weights
@@ -55,7 +54,7 @@ def preprocess_image(image):
     # Center crop so we can resize without distortion
     # Resize image to standardise input
     image = crop_center(image)
-    image = image.resize(IMAGE_DIM)
+    image = image.resize(IMAGE_SHAPE[:-1])
     
     # Subtract mean value
     img_mat[:, :, 0] -= 103.939
@@ -147,7 +146,7 @@ def build_style_loss(style_idx, pastiche_idx, model):
 
         # Compute style loss for layer
         # Ls = sum((Pl - Gl)^2) / (4 * Nl^2 * Ml ^ 2)
-        N, M = 3, IMAGE_DIM[0] * IMAGE_DIM[1]
+        N, M = 3, IMAGE_SHAPE[0] * IMAGE_SHAPE[1]
         layer_style_loss = K.sum(K.square(pastiche_gram - style_gram)) / \
             (4 * (N ** 2) * (M ** 2))
 
@@ -163,7 +162,7 @@ def build_total_variation_loss(pastiche_idx, model):
     pastiche = extract_tensor(model, pastiche_idx, TOTAL_VARIATION_LAYER)
     
     # Compute variation for each image axis
-    height, width = IMAGE_DIM
+    height, width = IMAGE_SHAPE[0], IMAGE_SHAPE[1]
     height_variation = K.square(pastiche[:height-1, :width-1 :] - 
                                 pastiche[1:, :width-1, :])
     width_variation = K.square(pastiche[:height-1, :width-1, :] - 
