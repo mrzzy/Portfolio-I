@@ -39,6 +39,7 @@ if __name__ == "__main__":
     if os.path.exists("pastiche"): rmtree("pastiche")
     os.mkdir("pastiche")
     with tf.Session() as sess:
+        writer = tf.summary.FileWriter('./logs/', sess.graph)
         # Init variables
         sess.run(tf.global_variables_initializer())
 
