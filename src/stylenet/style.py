@@ -26,7 +26,7 @@ TOTAL_VARIATION_WEIGHT = 0
 CONTENT_LAYER = 'block3_conv3'
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3',
                 'block5_conv3']
-TOTAL_VARIATION_LAYER = "block1_conv1"
+TOTAL_VARIATION_LAYER = "input_1"
 
 ## Data Preprocessing
 # Crop the given image to a square frame of x by x
@@ -90,7 +90,7 @@ def deprocess_image(img_mat):
 ## Utilities
 # Get a dictionary of the layers and corresponding tensors of the NN
 def get_layers(model):
-    layers = dict([(layer.name, layer.output) for layer in model.layers if layer.name != "input_1"])
+    layers = dict([(layer.name, layer.output) for layer in model.layers ])
     return layers
 
 # Compute the gram matrix for the given tensor
@@ -134,7 +134,7 @@ def build_content_loss(content_idx, pastiche_idx, model):
 # that the images differ more in style.
 def build_style_loss(style_idx, pastiche_idx, model):
     # Tabulate style loss for all style layers
-    style_loss = K.variable(0.0, name="style_loss")
+    style_losses = []
 
     for layer_name in STYLE_LAYERS:
         # Extract features from layer
@@ -151,7 +151,8 @@ def build_style_loss(style_idx, pastiche_idx, model):
         layer_style_loss = K.sum(K.square(pastiche_gram - style_gram)) / \
             (4 * (N ** 2) * (M ** 2))
 
-        style_loss = style_loss + layer_style_loss
+        style_losses.append(layer_style_loss)
+    style_loss = tf.reduce_sum(style_losses)
     
     return style_loss
 
@@ -186,8 +187,7 @@ def build_loss(pastiche, style, content):
     model = VGG16(input_tensor=input_op, weights='imagenet', include_top=False)
 
     # Freeze model from being trained 
-    for layer in model.layers:
-        layer.trainable = False
+    model.trainable = False
 
     # Compute total loss
     content_loss = build_content_loss(content_idx, pastiche_idx, model)
