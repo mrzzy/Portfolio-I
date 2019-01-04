@@ -1,4 +1,4 @@
-
+#
 # style.py
 # Artistic Style Transfer Metrics and Losses
 # as defined in Gatys et. al
@@ -10,9 +10,8 @@ import keras.backend as K
 
 from PIL import Image
 from keras.models import Model
+from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
-from shutil import rmtree
-from scipy.optimize import fmin_l_bfgs_b
 
 # Style transfer settings
 IMAGE_SHAPE = (128, 128, 3)
@@ -21,13 +20,13 @@ INPUT_SHAPE = (None,) + IMAGE_SHAPE
 # Loss computation weights
 CONTENT_WEIGHT = 0.05
 STYLE_WEIGHT = 50
-TOTAL_VARIATION_WEIGHT = 1
+TOTAL_VARIATION_WEIGHT = 0
 
 # Feature extraction using CNN model
 CONTENT_LAYER = 'block2_conv2'
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3',
                 'block5_conv3']
-TOTAL_VARIATION_LAYER = "input_1"
+TOTAL_VARIATION_LAYER = "block1_conv1"
 
 ## Data Preprocessing
 # Crop the given image to a square frame of x by x
@@ -55,6 +54,7 @@ def preprocess_image(image):
     # Resize image to standardise input
     image = crop_center(image)
     image = image.resize(IMAGE_SHAPE[:-1])
+    img_mat = np.array(image, dtype="float32")
     
     # Subtract mean value
     img_mat[:, :, 0] -= 103.939
@@ -89,7 +89,8 @@ def deprocess_image(img_mat):
 ## Utilities
 # Get a dictionary of the layers and corresponding tensors of the NN
 def get_layers(model):
-    return dict([(layer.name, layer.output) for layer in model.layers])
+    layers = dict([(layer.name, layer.output) for layer in model.layers if layer.name != "input_1"])
+    return layers
 
 # Compute the gram matrix for the given tensor
 # Gram matrix computes the correlations between each feature in x
@@ -111,7 +112,6 @@ def extract_tensor(model, i_position, layer_name):
     layers = get_layers(model)
     layer = layers[layer_name]
     tensor = layer[i_position, :, :, :]
-
     return tensor
 
 ## Loss Functions
@@ -174,10 +174,20 @@ def build_total_variation_loss(pastiche_idx, model):
     return total_variation
 
 # Build the tensor that will find the the total loss: a weighted
-# sum of the total varaition, style and content losses. 
+# sum of the total varaition, style and content losses for the given
+# pastiche style content tensor
 # Determines the optimisation problem in which style transfer is performed in 
 # minimising this loss
-def build_loss(pastiche_idx, style_idx, content_idx, model):
+def build_loss(pastiche, style, content):
+    # Build input tensor
+    pastiche_idx, style_idx, content_idx = 0, 1, 2
+    input_op = K.stack([pastiche, style, content])
+    model = VGG16(input_tensor=input_op, weights='imagenet', include_top=False)
+
+    # Freeze model from being trained 
+    for layer in model.layers:
+        layer.trainable = False
+
     # Compute total loss
     content_loss = build_content_loss(content_idx, pastiche_idx, model)
     style_loss = build_style_loss(style_idx, pastiche_idx, model)
@@ -192,6 +202,8 @@ def build_loss(pastiche_idx, style_idx, content_idx, model):
 
 if __name__ == "__main__":
     # Test build loss
-    input_op = K.placeholder((3,) + IMAGE_SHAPE, dtype=np.float32)
-    model = VGG16(input_tensor=input_op, weights='imagenet',
-                      include_top=False)
+    pastiche = K.placeholder(IMAGE_SHAPE)
+    style = K.placeholder(IMAGE_SHAPE)
+    content = K.placeholder(IMAGE_SHAPE)
+
+    build_loss(pastiche, style, content)
