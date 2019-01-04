@@ -44,7 +44,7 @@ if __name__ == "__main__":
         # Init variables
         sess.run(tf.global_variables_initializer())
 
-        for i_epoch in range(300):
+        for i_epoch in range(10):
             print("epoch ", i_epoch, "...")
             #sess.run(train_op)
             optimizer.minimize(sess)
