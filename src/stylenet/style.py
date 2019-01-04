@@ -14,19 +14,18 @@ from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (512, 512, 3)
-INPUT_SHAPE = (None,) + IMAGE_SHAPE
+IMAGE_SHAPE = (32, 32, 3)
 
 # Loss computation weights
 CONTENT_WEIGHT = 0.05
 STYLE_WEIGHT = 50
 TOTAL_VARIATION_WEIGHT = 0
 
-# Feature extraction using CNN model
-CONTENT_LAYER = 'block2_conv2'
+# Layers for feature extraction
+CONTENT_LAYERS = ['input_1']
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3',
                 'block5_conv3']
-TOTAL_VARIATION_LAYER = "block1_conv1"
+DENOISING_LAYERS = [ "input_1" ]
 
 ## Data Preprocessing
 # Crop the given image to a square frame of x by x
@@ -86,3 +85,107 @@ def deprocess_image(img_mat):
 
     return image
 
+## Feature extraction
+# Build and returns a model that returns features tensors given an input tensor
+# that extracts features based on the given layers names
+def build_extractor(layer_names):
+    # Load VGG model
+    vgg_model = VGG16(input_shape=IMAGE_SHAPE, weights="imagenet", include_top=False)
+    vgg_model.trainable = False
+
+    # Build  model by extracting  feature tensors
+    layers = [ vgg_model.get_layer(name) for name in layer_names ]
+    feature_ops = [ layer.output for layer in layers ] 
+    model = Model(inputs=[vgg_model.input], outputs=feature_ops)
+
+    return model
+
+# Build and return the gram matrix tensor for the given input features tensor
+def build_gram_matrix(input_op):
+    # Flatten input tensor, leaving features dimention
+    n_features = input_op.shape[-1].value
+    input_op = K.reshape(input_op, (-1, n_features))
+    
+    # Compute gram matrix
+    gram_mat_op = K.dot(input_op, K.transpose(input_op))
+    return gram_mat_op
+
+## Loss functions
+# Build and return tensor that computes content loss given the 
+# pastiche and content image tensors
+def build_content_loss(pastiche_op, content_op):
+    # Shape tensors for feature extraction
+    pastiche_op = tf.expand_dims(pastiche_op, axis=0)
+    content_op = tf.expand_dims(content_op, axis=0)
+    
+    # Extract content features using content extractor
+    extractor = build_extractor(CONTENT_LAYERS)
+    pastiche_feature_op = extractor(pastiche_op)
+    content_feature_op = extractor(content_op)
+    
+    # Compute content loss
+    loss = tf.losses.mean_squared_error(pastiche_feature_op, content_feature_op)
+
+    return loss
+
+# Build and return tensor that computes style loss given the 
+# pastiche and style image tensors
+def build_style_loss(pastiche_op, style_op):
+    # Shape tensors for feature extraction
+    pastiche_op = tf.expand_dims(pastiche_op, axis=0)
+    style_op = tf.expand_dims(style_op, axis=0)
+
+    # Extract style features using style extractor
+    extractor = build_extractor(STYLE_LAYERS)
+    pastiche_feature_ops = extractor(pastiche_op)
+    style_feature_ops = extractor(style_op)
+    
+    pastiche_gram_ops = [ build_gram_matrix(f) for f in pastiche_feature_ops ]
+    style_gram_ops = [ build_gram_matrix(f) for f in style_feature_ops ]
+    
+    # Compute style loss
+    losses = []
+    for pastiche_feature_op, style_feature_op in zip(pastiche_feature_ops, 
+                                                     style_feature_ops):
+        # Define constants
+        n_batch, n_height, n_width, n_features = pastiche_feature_op.shape.as_list()
+        N = n_features
+        M = n_height * n_width
+
+        # Compute gram matrix representations of style features
+        pastiche_gram_op = build_gram_matrix(pastiche_feature_op)
+        style_gram_op = build_gram_matrix(style_feature_op)
+    
+        # Compute layer contribution to loss
+        loss = tf.losses.mean_squared_error(pastiche_gram_op, 
+                                            style_gram_op) / (4 * (N ** 2) * (M ** 2))
+        losses.append(loss)
+    
+    return K.sum(losses)
+    
+
+if __name__ == "__main__":
+    content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
+    style = preprocess_image(Image.open("./data/stary_night.jpg"))
+    pastiche = np.random.uniform(size=IMAGE_SHAPE) * 256
+    
+    pastiche_op = K.variable(pastiche)
+    content_op = K.constant(content)
+    style_op = K.constant(style)
+
+    #loss_op = build_content_loss(pastiche_op, content_op)
+    loss_op = build_style_loss(pastiche_op, style_op)
+    print(loss_op)
+
+    optimizer = tf.train.AdamOptimizer(learning_rate=3e+1)
+    train_op = optimizer.minimize(loss_op, var_list=[ pastiche_op ])
+    
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        
+        for i in range(10):
+            sess.run(train_op)
+            print(i," - loss: ", sess.run(loss_op))
+        
+        img = deprocess_image(sess.run(pastiche_op))
+        img.save("test.jpg")
