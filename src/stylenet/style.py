@@ -18,12 +18,12 @@ IMAGE_SHAPE = (512, 512, 3)
 INPUT_SHAPE = (None,) + IMAGE_SHAPE
 
 # Loss computation weights
-CONTENT_WEIGHT = 0.05
+CONTENT_WEIGHT = 0.005
 STYLE_WEIGHT = 50
 TOTAL_VARIATION_WEIGHT = 0
 
 # Feature extraction using CNN model
-CONTENT_LAYER = 'block2_conv2'
+CONTENT_LAYER = 'block3_conv3'
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3',
                 'block5_conv3']
 TOTAL_VARIATION_LAYER = "block1_conv1"
@@ -72,6 +72,7 @@ def preprocess_image(image):
 def deprocess_image(img_mat):
     img_mat = np.copy(img_mat)
     img_mat = np.reshape(img_mat, IMAGE_SHAPE)
+
     # Swap BGR to RGB
     img_mat = img_mat[:, :, ::-1]
 

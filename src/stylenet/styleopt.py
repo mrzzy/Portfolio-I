@@ -33,10 +33,8 @@ if __name__ == "__main__":
     loss_op = style.build_loss(pastiche_op, style_op, content_op)
     
     # Perform optimisation for style transfer
-    #optimizer = tf.train.AdamOptimizer(learning_rate=1e+1)
-    optimizer = ScipyOptimizerInterface(loss_op, options={'maxfun': 20}, 
-                                        method='L-BFGS-B', var_list=[pastiche_op])
-    #train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
+    optimizer = tf.train.AdamOptimizer(learning_rate=1e+1)
+    train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
     
     if os.path.exists("pastiche"): rmtree("pastiche")
     os.mkdir("pastiche")
@@ -44,10 +42,9 @@ if __name__ == "__main__":
         # Init variables
         sess.run(tf.global_variables_initializer())
 
-        for i_epoch in range(10):
+        for i_epoch in range(300):
             print("epoch ", i_epoch, "...")
-            #sess.run(train_op)
-            optimizer.minimize(sess)
+            sess.run(train_op)
         
             print("loss: ", sess.run(loss_op))
             pastiche_mat = sess.run(pastiche_op)
