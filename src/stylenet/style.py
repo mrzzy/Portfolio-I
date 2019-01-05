@@ -14,7 +14,7 @@ from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (32, 32, 3)
+IMAGE_SHAPE = (128, 128, 3)
 
 # Loss computation weights
 CONTENT_WEIGHT = 0.05
@@ -52,7 +52,7 @@ def preprocess_image(image):
     # Center crop so we can resize without distortion
     # Resize image to standardise input
     image = crop_center(image)
-    image = image.resize(IMAGE_SHAPE[:-1])
+    image = image.resize(IMAGE_SHAPE[:2])
     img_mat = np.array(image, dtype="float32")
     
     # Subtract mean value
@@ -107,7 +107,7 @@ def build_gram_matrix(input_op):
     input_op = K.reshape(input_op, (-1, n_features))
     
     # Compute gram matrix
-    gram_mat_op = K.dot(input_op, K.transpose(input_op))
+    gram_mat_op = K.dot(K.transpose(input_op), input_op)
     return gram_mat_op
 
 ## Loss functions
@@ -169,23 +169,23 @@ if __name__ == "__main__":
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
     pastiche = np.random.uniform(size=IMAGE_SHAPE) * 256
     
+    session = tf.Session()
+    K.set_session(session)
     pastiche_op = K.variable(pastiche)
     content_op = K.constant(content)
     style_op = K.constant(style)
 
     #loss_op = build_content_loss(pastiche_op, content_op)
-    loss_op = build_style_loss(pastiche_op, style_op)
-    print(loss_op)
+    loss_op = 1e+6 * build_style_loss(pastiche_op, style_op)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=3e+1)
+    optimizer = tf.train.AdamOptimizer(learning_rate=1e+2)
     train_op = optimizer.minimize(loss_op, var_list=[ pastiche_op ])
     
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        
-        for i in range(10):
-            sess.run(train_op)
-            print(i," - loss: ", sess.run(loss_op))
-        
-        img = deprocess_image(sess.run(pastiche_op))
-        img.save("test.jpg")
+    session.run(tf.global_variables_initializer())
+    
+    for i in range(300):
+        _, loss, pastiche = session.run([train_op, loss_op, pastiche_op])
+        print(i," - loss: ", loss)
+    
+        img = deprocess_image(pastiche)
+        img.save("pastiche/{}.jpg".format(i))
