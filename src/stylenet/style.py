@@ -14,12 +14,12 @@ from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (128, 128, 3)
+IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 1
-STYLE_WEIGHT = 5e+2
-TOTAL_VARIATION_WEIGHT = 0
+CONTENT_WEIGHT = 0
+STYLE_WEIGHT = 8e+2
+TOTAL_VARIATION_WEIGHT = 4
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block2_conv2']
