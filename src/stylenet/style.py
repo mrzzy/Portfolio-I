@@ -17,12 +17,12 @@ from keras.applications.vgg16 import VGG16
 IMAGE_SHAPE = (128, 128, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 0.05
-STYLE_WEIGHT = 50
+CONTENT_WEIGHT = 1
+STYLE_WEIGHT = 5e+2
 TOTAL_VARIATION_WEIGHT = 0
 
 # Layers for feature extraction
-CONTENT_LAYERS = ['input_1']
+CONTENT_LAYERS = ['block2_conv2']
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3',
                 'block5_conv3']
 DENOISING_LAYERS = [ "input_1" ]
@@ -164,6 +164,17 @@ def build_style_loss(pastiche_op, style_op):
     return K.sum(losses)
     
 
+# Build and return tensor that total style transfer loss given the
+# pastiche, content and style image tensors 
+def build_loss(pastiche_op, content_op, style_op):
+    content_loss_op = build_content_loss(pastiche_op, content_op)
+    style_loss_op = build_style_loss(pastiche_op, style_op)
+
+    # Total loss weight sum of content and style Losses
+    loss = CONTENT_WEIGHT * content_loss_op + STYLE_WEIGHT * style_loss_op
+
+    return loss
+
 if __name__ == "__main__":
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
@@ -175,15 +186,14 @@ if __name__ == "__main__":
     content_op = K.constant(content)
     style_op = K.constant(style)
 
-    #loss_op = build_content_loss(pastiche_op, content_op)
-    loss_op = 1e+6 * build_style_loss(pastiche_op, style_op)
+    loss_op = build_loss(pastiche_op, content_op, style_op)
 
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e+2)
+    optimizer = tf.train.AdamOptimizer(learning_rate=3e+1)
     train_op = optimizer.minimize(loss_op, var_list=[ pastiche_op ])
     
     session.run(tf.global_variables_initializer())
     
-    for i in range(300):
+    for i in range(150):
         _, loss, pastiche = session.run([train_op, loss_op, pastiche_op])
         print(i," - loss: ", loss)
     
