@@ -25,8 +25,8 @@ DENOISE_WEIGHT = 1
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block2_conv2']
-STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3',
-                'block5_conv3']
+#STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
+STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3']
 DENOISING_LAYERS = [ "input_1" ]
 
 ## Data Preprocessing
@@ -229,6 +229,17 @@ def build_loss(pastiche_op, content_op, style_op):
         loss_summary = tf.summary.scalar("style_transfer_loss", loss_op)
         
         return loss_op
+
+def reverse_tensor(pastiche_op):
+    blue_op, green_op, red_op = tf.unstack(pastiche_op, axis=-1)
+
+    # Add mean value
+    red_op = red_op - 103.939
+    green_op = green_op - 103.939
+    blue_op = blue_op - 103.939
+
+
+    return tf.stack([red_op, green_op, blue_op], axis=-1)
     
 if __name__ == "__main__":
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
@@ -251,11 +262,11 @@ if __name__ == "__main__":
     writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
     # Track changes to pastiche with tensorboard
     tf.summary.histogram("pasitche_changes", pastiche_op)
-    tf.summary.image("pastiche", tf.expand_dims(pastiche_op, axis=0))
+    tf.summary.image("pastiche", tf.expand_dims(reverse_tensor(pastiche_op), axis=0))
     summary_op = tf.summary.merge_all()
 
     session.run(tf.global_variables_initializer())
-    n_epochs = 150
+    n_epochs = 100
     for i in range(n_epochs):
         feed = {K.learning_phase(): 0}
         _, loss, pastiche, summary = session.run([train_op, loss_op, pastiche_op,
