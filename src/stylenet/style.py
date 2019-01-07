@@ -16,17 +16,17 @@ from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (256, 256, 3)
+IMAGE_SHAPE = (128, 128, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 1
+CONTENT_WEIGHT = 0
 STYLE_WEIGHT = 1
 DENOISE_WEIGHT = 1
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block2_conv2']
 #STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3']
-STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3']
+STYLE_LAYERS = ['block2_conv2']
 DENOISING_LAYERS = [ "input_1" ]
 
 ## Data Preprocessing
@@ -254,9 +254,10 @@ if __name__ == "__main__":
     content_op = K.constant(content, name="content")
     style_op = K.constant(style, name="style")
     
-    loss_op = build_loss(pastiche_op, content_op, style_op)
+    #loss_op = build_loss(pastiche_op, content_op, style_op)
+    loss_op = build_style_loss(pastiche_op, style_op)
     
-    optimizer = tf.train.AdamOptimizer(learning_rate=3e+1)
+    optimizer = tf.train.AdamOptimizer(learning_rate=3)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
 
     writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
@@ -270,8 +271,7 @@ if __name__ == "__main__":
     for i in range(n_epochs):
         feed = {K.learning_phase(): 0}
         _, loss, pastiche, summary = session.run([train_op, loss_op, pastiche_op,
-                                                  summary_op],
-                                                 feed_dict=feed)
+                                                  summary_op], feed_dict=feed)
         print("[{}/{}] loss: {:e}".format(i, n_epochs, loss))
         
         pastiche_image = deprocess_image(pastiche)
