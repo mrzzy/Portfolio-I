@@ -16,7 +16,7 @@ from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (512, 512, 3)
+IMAGE_SHAPE = (64, 64, 3)
 
 # Loss computation weights
 CONTENT_WEIGHT = 1
@@ -134,9 +134,10 @@ def build_content_loss(pastiche_op, content_op):
         content_feature_ops = extractor(content_op)
         
         # Compute content loss
-        loss_op = tf.reduce_sum(tf.squared_difference(pastiche_feature_ops,
+        loss_op = tf.reduce_mean(tf.squared_difference(pastiche_feature_ops,
                                                        content_feature_ops), 
                                 name="content_loss")
+    
 
         # Track content loss with tensorboard
         loss_summary = tf.summary.scalar("content_loss", loss_op)
@@ -253,8 +254,7 @@ if __name__ == "__main__":
     content_op = K.constant(content, name="content")
     style_op = K.constant(style, name="style")
     
-    #loss_op = build_loss(pastiche_op, content_op, style_op)
-    loss_op = build_style_loss(pastiche_op, style_op)
+    loss_op = build_loss(pastiche_op, content_op, style_op)
     
     optimizer = tf.train.AdamOptimizer(learning_rate=1e+2)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
