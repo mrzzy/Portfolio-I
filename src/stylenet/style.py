@@ -16,10 +16,10 @@ from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (64, 64, 3)
+IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 0
+CONTENT_WEIGHT = 1
 STYLE_WEIGHT = 1
 DENOISE_WEIGHT = 0
 
@@ -233,6 +233,9 @@ def reverse_tensor(pastiche_op):
     return tf.stack([red_op, green_op, blue_op], axis=-1)
     
 if __name__ == "__main__":
+    import os
+    from shutil import rmtree
+
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
     pastiche = np.random.uniform(size=IMAGE_SHAPE) * 256.0 - 128.0
@@ -245,8 +248,7 @@ if __name__ == "__main__":
     content_op = K.constant(content, name="content")
     style_op = K.constant(style, name="style")
     
-    #loss_op = build_loss(pastiche_op, content_op, style_op)
-    loss_op = build_style_loss(pastiche_op, style_op)
+    loss_op = build_loss(pastiche_op, content_op, style_op)
     
     optimizer = tf.train.AdamOptimizer(learning_rate=1e+2)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
@@ -259,6 +261,10 @@ if __name__ == "__main__":
 
     session.run(tf.global_variables_initializer())
     n_epochs = 100
+    
+    # Setup pastiche directory
+    if os.path.exists("pastiche"): rmtree("pastiche")
+    os.mkdir("pastiche")
 
     for i in range(n_epochs):
         feed = {K.learning_phase(): 0}
@@ -267,8 +273,13 @@ if __name__ == "__main__":
         print("[{}/{}] loss: {:e}".format(i, n_epochs, loss))
         
         pastiche_image = deprocess_image(pastiche)
+
+        # Plot current pastiche image to show progressa
         plt.imshow(np.asarray(pastiche_image))
         plt.draw()
         plt.pause(1e-9)
+        
+        # Save pastiche image for laster
+        pastiche_image.save("pastiche/{}.jpg".format(i))
 
         writer.add_summary(summary, i)
