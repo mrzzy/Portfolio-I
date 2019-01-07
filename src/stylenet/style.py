@@ -10,17 +10,18 @@ import keras.backend as K
 import matplotlib.pyplot as plt
 
 from PIL import Image
+from datetime import datetime
 from keras.models import Model
 from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
 # Style transfer settings
-IMAGE_SHAPE = (64, 64, 3)
+IMAGE_SHAPE = (256, 256, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 0.025
-STYLE_WEIGHT = 5.0
-DENOISE_WEIGHT = 1.0
+CONTENT_WEIGHT = 1
+STYLE_WEIGHT = 3e-1
+DENOISE_WEIGHT = 1
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block2_conv2']
@@ -112,11 +113,12 @@ def build_gram_matrix(input_op):
     with tf.name_scope("gram_matrix"):
         # Flatten input tensor, leaving features dimention
         n_features = input_op.shape[-1].value
-        input_op = K.reshape(input_op, (-1, n_features))
+        input_op = tf.reshape(input_op, (-1, n_features))
         
         # Compute gram matrix
-        gram_mat_op = K.dot(K.transpose(input_op), input_op)
+        gram_mat_op = tf.matmul(K.transpose(input_op), input_op)
         return gram_mat_op
+
 
 ## Loss functions
 # Build and return tensor that computes content loss given the 
@@ -133,12 +135,66 @@ def build_content_loss(pastiche_op, content_op):
         content_feature_ops = extractor(content_op)
         
         # Compute content loss
-        differences = [ P - C for P, C in zip(pastiche_feature_ops, 
-                                              content_feature_ops) ]
-                       
-        loss = tf.reduce_sum(tf.square(differences), name="content_loss")
+        loss_op = tf.reduce_sum(tf.squared_difference(pastiche_feature_ops,
+                                                       content_feature_ops), 
+                                name="content_loss")
 
-        return loss
+        # Track content loss with tensorboard
+        loss_summary = tf.summary.scalar("content_loss", loss_op)
+
+        return loss_op
+
+# Build and return a tensor that computes style loss given the
+# pastiche and content image tensors
+# Loss attempts to reduce the noise in the generated images
+def build_style_loss(pastiche_op, style_op):
+    with tf.name_scope("style_loss"):
+        # Shape tensors for feature extraction
+        pastiche_op = tf.expand_dims(pastiche_op, axis=0)
+        style_op = tf.expand_dims(style_op, axis=0)
+        
+        # Extract style features using style extractor
+        extractor = build_extractor(STYLE_LAYERS)
+        pastiche_feature_ops = extractor(pastiche_op)
+        style_feature_ops = extractor(style_op)
+    
+        
+        def build_layer_style_loss(layer_name, pastiche_feature_op,
+                                   style_feature_op):
+            loss_name = "layer_style_loss/{}".format(layer_name)
+            with tf.name_scope(loss_name): 
+                pastiche_feature_op = tf.squeeze(pastiche_feature_op)
+                style_feature_op = tf.squeeze(style_feature_op)
+
+                # Compute constants
+                height, width, n_channels = pastiche_feature_op.shape.as_list()
+                M = height * width
+                N = n_channels
+                
+                # Compute feature correlations with gram matrix
+                pastiche_gram_op = build_gram_matrix(pastiche_feature_op)
+                style_gram_op = build_gram_matrix(style_feature_op)
+
+                # Compute style loss for layer
+                layer_loss_op = (
+                    tf.reduce_mean(tf.squared_difference(pastiche_gram_op,
+                                                        style_gram_op))
+                    / 4.0 * (M ** 2) * (N ** 2))
+                
+                tf.summary.scalar(loss_name, layer_loss_op)
+                return layer_loss_op
+
+        # Compute style total style loss
+        layer_loss_ops = [ build_layer_style_loss(n, p, s) for n, p, s in 
+                          zip(STYLE_LAYERS, pastiche_feature_ops, style_feature_ops) ]
+        layer_weights = [ 1.0 / len(STYLE_LAYERS) ] * len(STYLE_LAYERS)
+        loss_op = tf.reduce_sum(tf.multiply(layer_weights, layer_loss_ops),
+                                name="style_loss")
+
+        # Track style loss with tensorboard
+        loss_summary = tf.summary.scalar("style_loss", loss_op)
+            
+        return loss_op
 
 # Build and return a tensor that computes total variation loss
 # Loss attempts to reduce the noise in the generated images
@@ -146,12 +202,15 @@ def build_noise_loss(pastiche_op):
     with tf.name_scope("noise_loss"):
         #TODO: implement multiple layers
         # Compute variation accross image axis
-        height_variation = K.sum(K.abs(pastiche_op[:-1, :, :] - pastiche_op[1:, :, :]))
-        width_variation = K.sum(tf.abs(pastiche_op[:, :-1, :] - pastiche_op[:, 1:, :]))
+        height_variation_op = K.sum(K.abs(pastiche_op[:-1, :, :] - pastiche_op[1:, :, :]))
+        width_variation_op = K.sum(tf.abs(pastiche_op[:, :-1, :] - pastiche_op[:, 1:, :]))
         
-        total_variation = height_variation + width_variation
+        loss_op = tf.add(height_variation_op, width_variation_op, name="total_variation_loss")
+        
+        # Track total variation with tensorboard
+        loss_summary = tf.summary.scalar("total_variation_loss", loss_op)
 
-        return total_variation
+        return loss_op
 
 # Build and return tensor that total style transfer loss given the
 # pastiche, content and style image tensors 
@@ -162,24 +221,21 @@ def build_loss(pastiche_op, content_op, style_op):
         noise_loss_op = build_noise_loss(pastiche_op)
 
         # Total loss weight sum of content and style Losses
-        loss = CONTENT_WEIGHT * content_loss_op \
-            + STYLE_WEIGHT * style_loss_op \
-            + DENOISE_WEIGHT * noise_loss_op
+        loss_op = tf.add_n([CONTENT_WEIGHT * content_loss_op,
+            + STYLE_WEIGHT * style_loss_op,
+            + DENOISE_WEIGHT * noise_loss_op], name="style_transfer_loss")
 
-        return loss
+        # Track style transer loss loss with tensorboard
+        loss_summary = tf.summary.scalar("style_transfer_loss", loss_op)
+        
+        return loss_op
     
-def build_summary(loss_op):
-    loss_summary = tf.summary.scalar("Style Transfer Loss", loss_op)
-    summary_op = tf.summary.merge([loss_summary])
-    
-    return summary_op
-
 if __name__ == "__main__":
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
     pastiche = np.random.uniform(size=IMAGE_SHAPE) * 256.0 - 128.0
-    
-    K.clear_session()
+
+    tf.reset_default_graph()
     session = tf.Session()
     K.set_session(session)
 
@@ -187,16 +243,19 @@ if __name__ == "__main__":
     content_op = K.constant(content, name="content")
     style_op = K.constant(style, name="style")
     
-    loss_op = build_content_loss(pastiche_op, content_op)
+    loss_op = build_loss(pastiche_op, content_op, style_op)
     
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e+2)
+    optimizer = tf.train.AdamOptimizer(learning_rate=3e+1)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
 
-    writer = tf.summary.FileWriter("logs", session.graph)
-    summary_op = build_summary(loss_op)
+    writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
+    # Track changes to pastiche with tensorboard
+    tf.summary.histogram("pasitche_changes", pastiche_op)
+    tf.summary.image("pastiche", tf.expand_dims(pastiche_op, axis=0))
+    summary_op = tf.summary.merge_all()
 
     session.run(tf.global_variables_initializer())
-    n_epochs = 100
+    n_epochs = 150
     for i in range(n_epochs):
         feed = {K.learning_phase(): 0}
         _, loss, pastiche, summary = session.run([train_op, loss_op, pastiche_op,
