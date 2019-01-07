@@ -19,14 +19,13 @@ from keras.applications.vgg16 import VGG16
 IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 1
+CONTENT_WEIGHT = 2
 STYLE_WEIGHT = 1
 DENOISE_WEIGHT = 0
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block2_conv2']
-STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 
-                'block5_conv3']
+STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3']
 
 DENOISING_LAYERS = [ "input_1" ]
 
