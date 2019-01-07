@@ -176,7 +176,7 @@ def build_style_loss(pastiche_op, style_op):
 
                 # Compute style loss for layer
                 layer_loss_op = (
-                    tf.reduce_mean(tf.squared_difference(pastiche_gram_op,
+                    tf.reduce_sum(tf.squared_difference(pastiche_gram_op,
                                                         style_gram_op))
                     / 4.0 * (M ** 2) * (N ** 2))
                 
