@@ -250,7 +250,7 @@ if __name__ == "__main__":
     
     loss_op = build_loss(pastiche_op, content_op, style_op)
     
-    optimizer = tf.train.AdamOptimizer(learning_rate=1e+2)
+    optimizer = tf.train.AdamOptimizer(learning_rate=3e+2)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
 
     writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     summary_op = tf.summary.merge_all()
 
     session.run(tf.global_variables_initializer())
-    n_epochs = 100
+    n_epochs = 150
     
     # Setup pastiche directory
     if os.path.exists("pastiche"): rmtree("pastiche")
