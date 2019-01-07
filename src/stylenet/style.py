@@ -21,7 +21,7 @@ IMAGE_SHAPE = (128, 128, 3)
 # Loss computation weights
 CONTENT_WEIGHT = 0
 STYLE_WEIGHT = 1
-DENOISE_WEIGHT = 1
+DENOISE_WEIGHT = 0
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block2_conv2']
