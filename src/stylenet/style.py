@@ -20,7 +20,7 @@ IMAGE_SHAPE = (256, 256, 3)
 
 # Loss computation weights
 CONTENT_WEIGHT = 1
-STYLE_WEIGHT = 3e-1
+STYLE_WEIGHT = 1
 DENOISE_WEIGHT = 1
 
 # Layers for feature extraction
