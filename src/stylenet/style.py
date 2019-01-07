@@ -19,8 +19,8 @@ from keras.applications.vgg16 import VGG16
 IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
-CONTENT_WEIGHT = 0
-STYLE_WEIGHT = 1
+CONTENT_WEIGHT = 1
+STYLE_WEIGHT = 0
 DENOISE_WEIGHT = 0
 
 # Layers for feature extraction
