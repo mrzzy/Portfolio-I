@@ -267,7 +267,8 @@ if __name__ == "__main__":
     summary_op = tf.summary.merge_all()
 
     session.run(tf.global_variables_initializer())
-    n_epochs = 100
+    n_epochs = 300
+
     for i in range(n_epochs):
         feed = {K.learning_phase(): 0}
         _, loss, pastiche, summary = session.run([train_op, loss_op, pastiche_op,
