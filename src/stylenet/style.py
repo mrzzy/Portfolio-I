@@ -257,7 +257,7 @@ if __name__ == "__main__":
     #loss_op = build_loss(pastiche_op, content_op, style_op)
     loss_op = build_style_loss(pastiche_op, style_op)
     
-    optimizer = tf.train.AdamOptimizer(learning_rate=3)
+    optimizer = tf.train.AdamOptimizer(learning_rate=3e-2)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
 
     writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
