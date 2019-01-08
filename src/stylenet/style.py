@@ -20,7 +20,7 @@ IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
 CONTENT_WEIGHT = 1
-STYLE_WEIGHT = 1e+3
+STYLE_WEIGHT = 1
 DENOISE_WEIGHT = 1e-5
 
 # Layers for feature extraction
@@ -251,7 +251,7 @@ if __name__ == "__main__":
     session = tf.Session()
     K.set_session(session)
 
-    pastiche_op = K.variable(pastiche, name="pastiche")
+    pastiche_op = K.clip(K.variable(pastiche, name="pastiche"), -128, 128)
     content_op = K.constant(content, name="content")
     style_op = K.constant(style, name="style")
     
