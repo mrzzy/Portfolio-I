@@ -29,7 +29,7 @@ DENOISE_WEIGHT = 0
 CONTENT_LAYERS = ['block5_conv2']
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 
                 'block5_conv3']
-STYLE_LAYERS = ['block1_conv2']
+STYLE_LAYERS = ['block2_conv2']
 
 DENOISING_LAYERS = [ "input_1" ]
 
@@ -244,7 +244,7 @@ if __name__ == "__main__":
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
     #pastiche = content.copy() # Generate pastiche from content
-    pastiche = np.random.rand(*IMAGE_SHAPE) * 1e-3 + 128.0
+    pastiche = np.random.normal(size=IMAGE_SHAPE, scale=1e-3) * 256 - 128
 
     tf.reset_default_graph()
     session = tf.Session()
