@@ -24,7 +24,7 @@ STYLE_WEIGHT = 0.8
 DENOISE_WEIGHT = 0
 
 # Layers for feature extraction
-CONTENT_LAYERS = ['block5_conv2']
+CONTENT_LAYERS = ['block2_conv2']
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3']
 DENOISING_LAYERS = [ "input_1" ]
 
