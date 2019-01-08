@@ -29,7 +29,7 @@ DENOISE_WEIGHT = 0
 CONTENT_LAYERS = ['block5_conv2']
 STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 
                 'block5_conv3']
-STYLE_LAYERS = ['block2_conv2']
+STYLE_LAYERS = ['block1_conv2']
 
 DENOISING_LAYERS = [ "input_1" ]
 
@@ -256,7 +256,7 @@ if __name__ == "__main__":
     
     loss_op = build_loss(pastiche_op, content_op, style_op)
     
-    optimizer = tf.train.AdamOptimizer(learning_rate=3e+2)
+    optimizer = tf.train.AdamOptimizer(learning_rate=2e+1)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
 
     writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
