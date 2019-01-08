@@ -173,6 +173,7 @@ def build_style_loss(pastiche_op, style_op):
                                                                      style_gram_op),
                                                name=layer_loss_name)
 
+                
                 # Track content loss for layer with tensorboard
                 loss_summary = tf.summary.scalar(layer_loss_name, layer_loss_op)
                 
