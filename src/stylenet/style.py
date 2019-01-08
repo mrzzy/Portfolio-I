@@ -19,16 +19,13 @@ from keras.applications.vgg16 import VGG16
 IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
-#CONTENT_WEIGHT = 1
-CONTENT_WEIGHT = 0
+CONTENT_WEIGHT = 1
 STYLE_WEIGHT = 1e+3
-#DENOISE_WEIGHT = 5e-2
-DENOISE_WEIGHT = 0
+DENOISE_WEIGHT = 5e-2
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block5_conv2']
-STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 
-                'block5_conv3']
+STYLE_LAYERS = ['block2_conv2', 'block3_conv3', 'block4_conv3']
 STYLE_LAYERS = ['block1_conv2']
 
 DENOISING_LAYERS = [ "input_1" ]
@@ -117,8 +114,10 @@ def build_gram_matrix(input_op):
     with tf.name_scope("gram_matrix"):
         # Flatten input feature dimention tensor, leaving channels dimention
         n_channels = input_op.shape[-1].value
+    
         input_op = tf.reshape(input_op, (-1, n_channels))
-        n_features = tf.cast(input_op.shape[0].value * n_channels, "float32")
+        n_features = tf.cast(tf.reduce_prod([ s.value for s in input_op.shape]),
+                             dtype="float32")
         
         # Compute gram matrix for correlations between features
         gram_mat_op = tf.matmul(K.transpose(input_op), input_op)
@@ -243,8 +242,7 @@ if __name__ == "__main__":
 
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
-    #pastiche = content.copy() # Generate pastiche from content
-    pastiche = np.random.normal(size=IMAGE_SHAPE) * 256 - 128
+    pastiche = content.copy() # Generate pastiche from content
 
     tf.reset_default_graph()
     session = tf.Session()
