@@ -251,7 +251,7 @@ if __name__ == "__main__":
     session = tf.Session()
     K.set_session(session)
 
-    pastiche_op = K.clip(K.variable(pastiche, name="pastiche"), -128, 128)
+    pastiche_op = K.variable(pastiche, name="pastiche")
     content_op = K.constant(content, name="content")
     style_op = K.constant(style, name="style")
     
