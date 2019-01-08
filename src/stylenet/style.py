@@ -25,8 +25,8 @@ DENOISE_WEIGHT = 5e-2
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block5_conv2']
-#STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3']
-STYLE_LAYERS = ['block3_conv3']
+STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 
+                'block5_conv3']
 
 DENOISING_LAYERS = [ "input_1" ]
 
@@ -115,7 +115,7 @@ def build_gram_matrix(input_op):
         # Flatten input feature dimention tensor, leaving channels dimention
         n_channels = input_op.shape[-1].value
         input_op = tf.reshape(input_op, (-1, n_channels))
-        n_features = tf.cast(input_op.shape[0].value, "float32")
+        n_features = tf.cast(input_op.shape[0].value * n_channels, "float32")
         
         # Compute gram matrix for correlations between features
         gram_mat_op = tf.matmul(K.transpose(input_op), input_op)
@@ -169,10 +169,9 @@ def build_style_loss(pastiche_op, style_op):
 
                 # Compute style loss for layer
                 layer_loss_name = layer_name + "_loss"
-                layer_loss_op = tf.reduce_mean(tf.squared_difference(pastiche_gram_op,
-                                                                     style_gram_op),
-                                               name=layer_loss_name)
-
+                layer_loss_op = tf.reduce_sum(tf.squared_difference(pastiche_gram_op,
+                                                                    style_gram_op),
+                                              name=layer_loss_name)
                 
                 # Track content loss for layer with tensorboard
                 loss_summary = tf.summary.scalar(layer_loss_name, layer_loss_op)
