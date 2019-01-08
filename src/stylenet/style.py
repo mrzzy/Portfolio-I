@@ -20,7 +20,7 @@ IMAGE_SHAPE = (512, 512, 3)
 
 # Loss computation weights
 CONTENT_WEIGHT = 1
-STYLE_WEIGHT = 0.8
+STYLE_WEIGHT = 5
 DENOISE_WEIGHT = 0
 
 # Layers for feature extraction
@@ -203,7 +203,7 @@ def build_noise_loss(pastiche_op):
         width_variation_op = tf.reduce_mean(K.abs(pastiche_op[:, :-1, :] - 
                                                   pastiche_op[:, 1:, :]))
         
-        loss_op = tf.add(height_variation_op, width_variation_op, 
+        loss_op = DENOISE_WEIGHT * tf.add(height_variation_op, width_variation_op, 
                          name="total_variation_loss")
         
         # Track total variation with tensorboard
