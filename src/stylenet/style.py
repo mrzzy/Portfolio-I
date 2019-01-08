@@ -194,8 +194,10 @@ def build_noise_loss(pastiche_op):
     with tf.name_scope("noise_loss"):
         #TODO: implement multiple layers
         # Compute variation accross image axis
-        height_variation_op = K.sum(K.abs(pastiche_op[:-1, :, :] - pastiche_op[1:, :, :]))
-        width_variation_op = K.sum(tf.abs(pastiche_op[:, :-1, :] - pastiche_op[:, 1:, :]))
+        height_variation_op = tf.reduce_mean(K.abs(pastiche_op[:-1, :, :] - 
+                                                   pastiche_op[1:, :, :]))
+        width_variation_op = tf.reduce_mean(K.abs(pastiche_op[:, :-1, :] - 
+                                                  pastiche_op[:, 1:, :]))
         
         loss_op = tf.add(height_variation_op, width_variation_op, name="total_variation_loss")
         
