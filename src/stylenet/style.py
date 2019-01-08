@@ -26,7 +26,7 @@ DENOISE_WEIGHT = 5e-2
 # Layers for feature extraction
 CONTENT_LAYERS = ['block5_conv2']
 #STYLE_LAYERS = ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3']
-STYLE_LAYERS = ['block1_conv2']
+STYLE_LAYERS = ['block3_conv3']
 
 DENOISING_LAYERS = [ "input_1" ]
 
