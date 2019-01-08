@@ -243,7 +243,7 @@ if __name__ == "__main__":
     content = preprocess_image(Image.open("./data/Tuebingen_Neckarfront.jpg"))
     style = preprocess_image(Image.open("./data/stary_night.jpg"))
     #pastiche = content.copy() # Generate pastiche from content
-    pastiche = np.random.rand(IMAGE_SHAPE) * 1e-3 + 128.0
+    pastiche = np.random.rand(*IMAGE_SHAPE) * 1e-3 + 128.0
 
     tf.reset_default_graph()
     session = tf.Session()
