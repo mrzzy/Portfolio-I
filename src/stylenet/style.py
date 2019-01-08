@@ -21,7 +21,7 @@ IMAGE_SHAPE = (512, 512, 3)
 # Loss computation weights
 CONTENT_WEIGHT = 1
 STYLE_WEIGHT = 1e+5
-DENOISE_WEIGHT = 1e+2
+DENOISE_WEIGHT = 1e+1
 
 # Layers for feature extraction
 CONTENT_LAYERS = ['block5_conv2']
@@ -253,7 +253,7 @@ if __name__ == "__main__":
     
     loss_op = build_loss(pastiche_op, content_op, style_op)
     
-    optimizer = tf.train.AdamOptimizer(learning_rate=2e+1)
+    optimizer = tf.train.AdamOptimizer(learning_rate=3e+2)
     train_op = optimizer.minimize(loss_op, var_list=[pastiche_op])
 
     writer = tf.summary.FileWriter("logs/{}".format(datetime.now()), session.graph)
