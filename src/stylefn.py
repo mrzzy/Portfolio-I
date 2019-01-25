@@ -53,6 +53,8 @@ def crop_center(image):
 
 # Preprocesses the image by the given Pillow image
 # swaps the image channels to BGR and subtracts the RGB mean value
+IMG_RGB_MEAN = (103.939, 116.779, 123.68)
+
 def preprocess_image(image):
     # Center crop so we can resize without distortion
     # Resize image to standardise input
@@ -60,10 +62,10 @@ def preprocess_image(image):
     image = image.resize(SETTINGS["image_shape"][:2])
     img_mat = np.array(image, dtype="float32")
     
-    # Subtract mean value
-    img_mat[:, :, 0] -= 103.939
-    img_mat[:, :, 1] -= 116.779
-    img_mat[:, :, 2] -= 123.68
+    # Subtract mean value 0 - red, 1 - blue, 2 - green
+    img_mat[:, :, 0] -= IMG_RGB_MEAN[0]
+    img_mat[:, :, 1] -= IMG_RGB_MEAN[1]
+    img_mat[:, :, 2] -= IMG_RGB_MEAN[2]
 
     # Swap RGB to BGR
     img_mat = img_mat[:, :, ::-1]
@@ -79,10 +81,10 @@ def deprocess_image(img_mat):
     # Swap BGR to RGB
     img_mat = img_mat[:, :, ::-1]
 
-    # Add mean value
-    img_mat[:, :, 0] += 103.939
-    img_mat[:, :, 1] += 116.779
-    img_mat[:, :, 2] += 123.68
+    # Add mean value 0 - red, 1 - blue, 2 - green
+    img_mat[:, :, 0] += IMG_RGB_MEAN[0]
+    img_mat[:, :, 1] += IMG_RGB_MEAN[1]
+    img_mat[:, :, 2] += IMG_RGB_MEAN[2]
 
     # Convert to image
     img_mat = np.clip(img_mat, 0, 255).astype('uint8')
