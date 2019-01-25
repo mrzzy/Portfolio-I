@@ -16,20 +16,20 @@ from keras.models import Model
 from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
-# Style transfer setting
+# Style transfer settings
 # NOTE: the following are default settings and may be overriden
 SETTINGS = {
     "image_shape": (512, 512, 3),
 
     # Loss computation weights
-    "content_weight": 1,
-    "style_weight": 1e+4,
-    "denoise_weight": 4e-2,
+    "content_weight": 0.025,
+    "style_weight": 5.0,
+    "denoise_weight": 1.0,
 
     # Layers for feature extraction
     "content_layers": ['block2_conv2'],
-    "style_layers": ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3'],
-    "denoising_layers": [ "input_1" ]
+    "style_layers": ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3'],
+    "denoising_layers": [ "input_1" ],
 }
 
 ## Data Preprocessing
@@ -52,14 +52,15 @@ def crop_center(image):
     return image
 
 # Preprocesses the image by the given Pillow image
+# Resizes image to the given target shape
 # swaps the image channels to BGR and subtracts the RGB mean value
+# Returs the preprocessed image
 IMG_RGB_MEAN = (103.939, 116.779, 123.68)
-
-def preprocess_image(image):
+def preprocess_image(image, shape):
     # Center crop so we can resize without distortion
     # Resize image to standardise input
     image = crop_center(image)
-    image = image.resize(SETTINGS["image_shape"][:2])
+    image = image.resize(shape[:-1])
     img_mat = np.array(image, dtype="float32")
     
     # Subtract mean value 0 - red, 1 - blue, 2 - green
@@ -72,12 +73,13 @@ def preprocess_image(image):
     return img_mat
 
 # Reverses the preprocessing done on the given matrix
+# Reshapes the image to the given target shape
 # swaps the image channels to RGB and adds the RGB mean value
 # Clips image values to valid range and converts matrix to Pillow image
-# Returns processed image
-def deprocess_image(img_mat):
+# Returns deprocessed image
+def deprocess_image(img_mat, shape):
     img_mat = np.copy(img_mat)
-    img_mat = np.reshape(img_mat, SETTINGS["image_shape"])
+    img_mat = np.reshape(img_mat, shape)
     # Swap BGR to RGB
     img_mat = img_mat[:, :, ::-1]
 
@@ -94,12 +96,12 @@ def deprocess_image(img_mat):
 
 ## Feature extraction
 # Build and returns a model that returns features tensors given an input tensor
-# that extracts features based on the given layers names
-def build_extractor(layer_names):
+# that extracts features based on the given layers names.
+# Extract Model will extract features from an input of given shape 
+def build_extractor(layer_names, shape):
     with tf.name_scope("feature_extractor"):
         # Load VGG model
-        vgg_model = VGG16(input_shape=SETTINGS["image_shape"], weights="imagenet", 
-                          include_top=False)
+        vgg_model = VGG16(input_shape=shape, weights="imagenet", include_top=False)
         vgg_model.trainable = False
 
         # Build  model by extracting  feature tensors
@@ -126,27 +128,28 @@ def build_gram_matrix(input_op):
         
         # Compute gram matrix for correlations between features
         gram_mat_op = tf.matmul(K.transpose(input_op), input_op)
-        return gram_mat_op / n_features
+        return gram_mat_op
 
 ## Loss functions
 # Build and return tensor that computes content loss given the 
-# pastiche and content image tensors
-def build_content_loss(pastiche_op, content_op):
+# pastiche and content image tensors using the content features extracted from 
+# content layers specified by content_layers
+def build_content_loss(pastiche_op, content_op, content_layers):
     with tf.name_scope("content_loss"):
         # Shape tensors for feature extraction
         pastiche_op = tf.expand_dims(pastiche_op, axis=0)
         content_op = tf.expand_dims(content_op, axis=0)
         
         # Extract content features using content extractor
-        extractor = build_extractor(SETTINGS["content_layers"])
+        op_shape = pastiche_op.shape.as_list()[1:]
+        extractor = build_extractor(content_layers, op_shape)
         pastiche_feature_ops = extractor(pastiche_op)
         content_feature_ops = extractor(content_op)
         
         # Compute content loss
-        loss_op = tf.reduce_mean(tf.squared_difference(pastiche_feature_ops,
+        loss_op = tf.reduce_sum(tf.squared_difference(pastiche_feature_ops,
                                                        content_feature_ops), 
                                 name="content_loss")
-    
 
         # Track content loss with tensorboard
         loss_summary = tf.summary.scalar("content_loss", loss_op)
@@ -154,16 +157,18 @@ def build_content_loss(pastiche_op, content_op):
         return loss_op
 
 # Build and return a tensor that computes style loss given the
-# pastiche and content image tensors
+# pastiche and style image tensors using the style features extracted from 
+# style layers specified by style_layers
 # Loss attempts to reduce the noise in the generated images
-def build_style_loss(pastiche_op, style_op):
+def build_style_loss(pastiche_op, style_op, style_layers):
     with tf.name_scope("style_loss"):
         # Shape tensors for feature extraction
         pastiche_op = tf.expand_dims(pastiche_op, axis=0)
         style_op = tf.expand_dims(style_op, axis=0)
         
         # Extract style features using style extractor
-        extractor = build_extractor(SETTINGS["style_layers"])
+        op_shape = pastiche_op.shape.as_list()[1:]
+        extractor = build_extractor(style_layers, op_shape)
         pastiche_feature_ops = extractor(pastiche_op)
         style_feature_ops = extractor(style_op)
         
@@ -174,11 +179,16 @@ def build_style_loss(pastiche_op, style_op):
                 pastiche_gram_op = build_gram_matrix(pastiche_feature_op)
                 style_gram_op = build_gram_matrix(style_feature_op)
 
+                # Determine scale factor 4 * N ^ 2 * M ^ 2
+                op_shape = pastiche_feature_op.shape.as_list()
+                scale_factor = (4 * (op_shape[-1] ** 2) * 
+                                ((op_shape[1] * op_shape[2]) ** 2))
+
                 # Compute style loss for layer
                 layer_loss_name = layer_name + "_loss"
                 layer_loss_op = tf.reduce_sum(tf.squared_difference(pastiche_gram_op,
                                                                     style_gram_op),
-                                              name=layer_loss_name)
+                                              name=layer_loss_name) / scale_factor
                 
                 # Track content loss for layer with tensorboard
                 loss_summary = tf.summary.scalar(layer_loss_name, layer_loss_op)
@@ -215,29 +225,22 @@ def build_noise_loss(pastiche_op):
         return loss_op
 
 # Build and return tensor that total style transfer loss given the
-# pastiche, content and style image tensors 
-def build_loss(pastiche_op, content_op, style_op):
+# pastiche, content and style image tensors, as configured by the given settings
+# see SETTINGS for configurable settings
+def build_loss(pastiche_op, content_op, style_op, settings=SETTINGS):
     with tf.name_scope("style_transfer_loss"):
-        content_loss_op = build_content_loss(pastiche_op, content_op)
-        style_loss_op = build_style_loss(pastiche_op, style_op)
+        content_loss_op = build_content_loss(pastiche_op, content_op, 
+                                             settings["content_layers"])
+        style_loss_op = build_style_loss(pastiche_op, style_op,
+                                         settings["style_layers"])
         noise_loss_op = build_noise_loss(pastiche_op)
 
         # Total loss weight sum of content and style Losses
-        loss_op = tf.add_n([SETTINGS["content_weight"] * content_loss_op,
-            + SETTINGS["style_weight"] * style_loss_op,
-            + SETTINGS["denoise_weight"] * noise_loss_op], name="style_transfer_loss")
+        loss_op = tf.add_n([settings["content_weight"] * content_loss_op,
+            + settings["style_weight"] * style_loss_op,
+            + settings["denoise_weight"] * noise_loss_op], name="style_transfer_loss")
 
         # Track style transer loss loss with tensorboard
         loss_summary = tf.summary.scalar("style_transfer_loss", loss_op)
         
         return loss_op
-
-def reverse_tensor(pastiche_op):
-    blue_op, green_op, red_op = tf.unstack(pastiche_op, axis=-1)
-
-    # Add mean value
-    red_op = red_op + 103.939
-    green_op = green_op + 116.779
-    blue_op = blue_op + 123.68
-
-    return tf.stack([red_op, green_op, blue_op], axis=-1)
