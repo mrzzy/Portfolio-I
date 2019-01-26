@@ -3,23 +3,22 @@ PUT /api/style:
     payload: json {
         content: content jpeg image base64 encoded
         style: style jpeg image base64 encoded
+        [settings]: optional style transfer settings overrides
     }
     
-    status: 201
+    http status: 200 
     response: json {
+        status: True
         id: uuid of the styled image 
     }
     
-    //OPTIONAL
-    settings: json {
-        stylefn options
+
+GET /api/status/<id>
+    http status: 200
+    response: {
+        progress: 0-1.0 progress of style transfer
     }
 
-
-GET /api/pastiche/<id>.jpg:
-    status: 200 - success/202 - not ready
-    response: jpeg image
-
-GET /api/pastiche/<id>/<iteration>.jpg:
-    status: 200 - success/202 - not ready
-    response: jpeg image
+GET /api/pastiche/<id>
+    http status: 200 - OK/ 202 - not yet ready
+    response: OK only - JPEG image of pastiche
