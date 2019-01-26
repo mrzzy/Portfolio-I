@@ -21,3 +21,12 @@ def read_file(path):
         content = f.read()
         return content
 
+# Apply the given setting overrides to the given default settings
+# Returns the default settings with the overrides applyed
+def apply_settings(overrides, defaults):
+    settings = dict(defaults) # Make shallow copy to make changes on
+    
+    for setting, value in overrides.items():
+        settings[setting] = value
+    
+    return settings

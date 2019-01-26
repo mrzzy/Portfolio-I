@@ -13,22 +13,23 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from datetime import datetime
 from keras.models import Model
+from util import apply_settings
 from keras.layers import InputLayer
 from keras.applications.vgg16 import VGG16
 
-# Style transfer settings
+# Style Transfer Function settings
 # NOTE: the following are default settings and may be overriden
 SETTINGS = {
     "image_shape": (512, 512, 3),
 
     # Loss computation weights
-    "content_weight": 0.025,
-    "style_weight": 5.0,
-    "denoise_weight": 1.0,
+    "content_weight": 1,
+    "style_weight": 3e+4,
+    "denoise_weight": 1,
 
     # Layers for feature extraction
     "content_layers": ['block2_conv2'],
-    "style_layers": ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3', 'block5_conv3'],
+    "style_layers": ['block1_conv2', 'block2_conv2', 'block3_conv3', 'block4_conv3'],
     "denoising_layers": [ "input_1" ],
 }
 
@@ -199,7 +200,7 @@ def build_style_loss(pastiche_op, style_op, style_layers):
                           zip(SETTINGS["style_layers"], pastiche_feature_ops, style_feature_ops) ]
     
         # Compute total style loss accross layers
-        loss_op = tf.reduce_sum(layer_loss_ops, name="style_loss")
+        loss_op = tf.reduce_mean(layer_loss_ops, name="style_loss")
         # Track content loss with tensorboard
         loss_summary = tf.summary.scalar("style_loss", loss_op)
 
@@ -211,9 +212,9 @@ def build_noise_loss(pastiche_op):
     with tf.name_scope("noise_loss"):
         #TODO: implement multiple layers
         # Compute variation accross image axis
-        height_variation_op = tf.reduce_mean(K.abs(pastiche_op[:-1, :, :] - 
+        height_variation_op = tf.reduce_sum(K.abs(pastiche_op[:-1, :, :] - 
                                                    pastiche_op[1:, :, :]))
-        width_variation_op = tf.reduce_mean(K.abs(pastiche_op[:, :-1, :] - 
+        width_variation_op = tf.reduce_sum(K.abs(pastiche_op[:, :-1, :] - 
                                                   pastiche_op[:, 1:, :]))
         
         loss_op = tf.add(height_variation_op, width_variation_op, 
@@ -225,9 +226,12 @@ def build_noise_loss(pastiche_op):
         return loss_op
 
 # Build and return tensor that total style transfer loss given the
-# pastiche, content and style image tensors, as configured by the given settings
-# see SETTINGS for configurable settings
-def build_loss(pastiche_op, content_op, style_op, settings=SETTINGS):
+# pastiche, content and style image tensors, as configured by the given settings 
+# overrides see SETTINGS for configurable settings
+def build_loss(pastiche_op, content_op, style_op, settings={}):
+    # Apply setting overrides
+    settings = apply_settings(settings, SETTINGS)
+    
     with tf.name_scope("style_transfer_loss"):
         content_loss_op = build_content_loss(pastiche_op, content_op, 
                                              settings["content_layers"])
