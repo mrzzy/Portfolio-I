@@ -1,55 +1,93 @@
 #
-# Style Transfer 
-# REST API functionality
+# Pastiche
+# REST API 
 #
 
 import json
 import uuid
-from base64 import b64encode, b64decode
+from abc import ABC, abstractmethod
+from util import decode_image
 
-SERVER_PORT = 8008
-#SERVER_URL = "http://127.0.0.1:{}".format(SERVER_PORT)
-SERVER_URL = "http://153.20.56.64:{}".format(SERVER_PORT)
 
-TAG_KEY = "tag_uuid_str"
-CONTENT_KEY = "content_base64_jpeg"
-STYLE_KEY = "style_base64_jpeg"
-
-STATUS_OK = 200
-STATUS_NOT_READY = 202
-STATUS_FAIL = 500
-
-SETTINGS_KEY = "settings_dict"
-SETTING_CONTENT_WEIGHT_KEY = "content_weight"
-SETTING_STYLE_WEIGHT_KEY = "style_weight"
-SETTING_DENOISE_WEIGHT_KEY ="denoise_weight"
-SETTING_NUMBER_EPOCHS_KEY = "n_epochs"
-
-# Pack style transfer payload for the given content and style image data
-# Returns a JSON representation of the payload and an uuid that uniquely tags
-# the payload. Also includes settings dictionary used to configure the style transfer 
-def pack_payload(content_data, style_data, tag_id, settings={}):
-    # Pack playload
-    payload = {
-        TAG_KEY: tag_id,
-        SETTINGS_KEY: settings,
-
-        # Encode image data 
-        CONTENT_KEY: b64encode(content_data).decode("utf-8"),
-        STYLE_KEY: b64encode(style_data).decode("utf-8")
-    }
+# Represents a style transfer request
+class TransferRequest:
+    CONTENT_IMAGE_KEY = "content_image"
+    STYLE_IMAGE_KEY = "style_image"
+    SETTINGS_KEY = "settings"
     
-    return json.dumps(payload)
+    # Construct a new Transfer Request for the given content and style image 
+    # and style transfer settings
+    def __init__(self, content_image, style_image, settings):
+        self.content_image = content_image
+        self.style_image = style_image
+        self.settings = settings
 
-# Unpack the style transfer payload given as payload json
-# Returns the content and style image data, and uuid tag that uniquely tags the
-# payload and style transfer settings
-def unpack_payload(payload_json):
-    payload = json.loads(payload_json)
-
-    tag_id = payload[TAG_KEY]
-    settings = payload[SETTINGS_KEY]
-    content_data = b64decode(payload[CONTENT_KEY])
-    style_data = b64decode(payload[STYLE_KEY])
+    # Parse a style transfer request from the given json
+    @classmethod
+    def parse(request_json):
+        # Parse payload
+        payload = json.loads(request_json)
+        # Extract content & style images
+        content_image = decode_image(
+            request_json[Request.CONTENT_IMAGE_KEY])
+        style_image = decode_image(
+            request_json[Request.STYLE_IMAGE_KEY])
+        # Extract settings
+        settings = request_json[SETTINGS_KEY]
     
-    return content_data, style_data, tag_id, settings
+        return cls(content_image, style_image, settings)
+
+    # Serialise this style transfer request to network transmittable JSON
+    def serialise(self):
+        contents = {
+            cls.CONTENT_IMAGE_KEY: self.content_image,
+            cls.STYLE_IMAGE_KEY: self.style_image,
+            cls.SETTINGS_KEY: self.settings
+        }
+    
+        return json.dumps(contents)
+
+
+# Represents a style transfer response
+class TransferResponse:
+    ID_KEY = "id"
+    
+    # Construct a style transfer response given ID
+    def __init__(self, ID):
+        self.ID = ID 
+    
+    @classmethod
+    # Parse a style transfer response from the given json
+    def parse(response_json):
+        contents = json.loads(response_json)
+        self.ID = contents[cls.ID_KEY]
+    
+    # Serialise this style transfer response to network transmittable JSON
+    def serialise(self):
+        contents = {
+            cls.ID_KEY: self.ID
+        }
+    
+        return json.dumps(contents)
+
+
+# Represents a style transfer status response
+class StatusResponse:
+    PROGRESS_KEY = "progress"
+    
+    # Construct a style transfer response given current progress (0.0 - 1.0)
+    def __init__(self, progress):
+        self.progress = progress 
+    
+    @classmethod
+    # Parse a style transfer status request from the given json
+    def parse(response_json):
+        contents = json.loads(response_json)
+        self.progress = contents[cls.PROGRESS_KEY]
+    
+    # Serialise this style transfer status response to network transmittable JSON
+    def serialise(self):
+        contents = {
+            cls.PROGRESS_KEY: self.progress
+        }
+        return json.dumps(contents)
