@@ -119,7 +119,8 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
         session.run(graph.train_op, feed_dict=feed)
     
         # Call callbacks
-        for callback in callbacks: callback(graph, feed, i_epoch)
+        if i_epoch % callback_step == 0:
+            for callback in callbacks: callback(graph, feed, i_epoch)
 
     # Deprocess style transfered image
     pastiche = session.run(graph.pastiche_op, feed_dict=feed)
