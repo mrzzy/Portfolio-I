@@ -200,7 +200,7 @@ def build_style_loss(pastiche_op, style_op, style_layers):
                           zip(SETTINGS["style_layers"], pastiche_feature_ops, style_feature_ops) ]
     
         # Compute total style loss accross layers
-        loss_op = tf.reduce_mean(layer_loss_ops, name="style_loss")
+        loss_op = tf.reduce_sum(layer_loss_ops, name="style_loss")
         # Track content loss with tensorboard
         loss_summary = tf.summary.scalar("style_loss", loss_op)
 
