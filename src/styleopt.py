@@ -73,32 +73,29 @@ def callback_tensorboard(graph, feed, i_epoch):
 
 # Callback for display progress infomation given transfuse graph and current
 # epoch number i_epoch and feed dict to run the graph
-def callback_progress(graph, feed, i_epoch,  n_step=100):
-    if i_epoch % n_step == 0:
-        loss = graph.session.run(graph.loss_op, feed_dict=feed)
-        print("[{}] loss: {:e}".format(i_epoch, loss))
+def callback_progress(graph, feed, i_epoch):
+    loss = graph.session.run(graph.loss_op, feed_dict=feed)
+    print("[{}] loss: {:e}".format(i_epoch, loss))
 
     
 # Callback to display current pastiche given transfuse graph and current
 # epoch number i_epoch and feed dict to run the graph
-# Displays pastiche computed every n_step epochs
-def callback_pastiche(graph, feed, i_epoch, n_step=100):
-    if i_epoch % n_step == 0:
-        pastiche = graph.session.run(graph.pastiche_op, feed_dict=feed)
-        pastiche_image = stylefn.deprocess_image(pastiche, graph.pastiche_shape)
-        
-        # Display image as a plot
-        plt.imshow(np.asarray(pastiche_image))
-        plt.draw()
-        plt.pause(1e-6)
-        plt.clf()
+def callback_pastiche(graph, feed, i_epoch):
+    pastiche = graph.session.run(graph.pastiche_op, feed_dict=feed)
+    pastiche_image = stylefn.deprocess_image(pastiche, graph.pastiche_shape)
+    
+    # Display image as a plot
+    plt.imshow(np.asarray(pastiche_image))
+    plt.draw()
+    plt.pause(1e-6)
+    plt.clf()
 
 # Perform style transfer using the optimisation method on the given content imag
 # using the style from the given style image, parameterised by settings
 # Applys the given style transfer settings before performing style transfer
-# At each epoch, will call the given callbacks
+# Every callback_step number of epochs, will call the given callbacks
 # Returns the pastiche, the results of performing style transfer
-def transfer_style(content_image, style_image, settings={}, callbacks=[]):
+def transfer_style(content_image, style_image, settings={}, callbacks=[], callback_step=1):
     # Apply setting overrides
     settings = apply_settings(settings, SETTINGS)
     print(settings)

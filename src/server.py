@@ -5,20 +5,17 @@
 
 import os
 import api
-import json
+import uuid
 import styleopt
 
 from PIL import Image
 from flask import Flask, request
 from multiprocessing import Process, Queue
 
-from client import read_file
-from util import convert_image, read_file
-
 ## Tasking
 # Style transfer worker that runs style transfers task as defined by the 
 # payloads queued
-class StyleWorker:
+class TransferWorker:
     def __init__(self, queue=Queue(), verbose=True):
         self.queue = queue
         self.verbose = verbose
@@ -27,74 +24,72 @@ class StyleWorker:
         self.process = Process(target=self.run)
         self.process.start()
     
+    # Enqeue a new style transfer task parameterised by the given style 
+    # transfer request. Returns an uuid that uniquely identifies the task
+    def enqueue(self, request):
+        # Create task for request
+        task_id = str(uuid.uuid4())
+        task = {
+            "request": request,
+            "ID": task_id
+        }
+
+        self.queue.put(task)
+
+        return task_id
+        
     # Run loop of worker
     def run(self):
         while True:
-            # Perform style transfer for payload
-            payload = self.queue.get()
+            # Perform style transfer for style transfer requst
+            task = self.queue.get()
+            request = task["request"]
+            task_id = task["ID"]
     
-            # Unpack and setup style transer for payload
-            content_data, style_data, tag, settings = api.unpack_payload(payload)
-            content_image = convert_image(content_data)
-            style_image = convert_image(style_data)
+            # Unpack style transfer request
+            content_image = request.content_image
+            style_image = request.style_image
+            settings = request.settings
 
             # Perform style transfer
-            if self.verbose: print("[StyleWorker]: processing payload: ", tag)
-            n_epochs = 100
-            if api.SETTING_NUMBER_EPOCHS_KEY in settings:  
-                n_epochs = settings[api.SETTING_NUMBER_EPOCHS_KEY]
-            pastiche_image = styleopt.transfer_style(content_image, style_image,
-                                                     n_epochs=n_epochs,
-                                                     settings=settings,
-                                                     verbose=self.verbose)
+            if self.verbose: print("[TransferWorker]: processing payload: ", task_id)
+            pastiche_image = styleopt.transfer_style(content_image, style_image, 
+                                            settings=settings,
+                                            callbacks=[styleopt.callback_progress])
         
             # Save results of style transfer
-            if self.verbose: print("[StyleWorker]: completed payload: ", tag)
+            if self.verbose: print("[TransferWorker]: completed payload: ", task_id)
             if not os.path.exists("static/pastiche"): os.mkdir("static/pastiche")
-            pastiche_image.save("static/pastiche/{}.jpg".format(tag))
+            pastiche_image.save("static/pastiche/{}.jpg".format(task_id))
             
-worker = StyleWorker()
-            
-## Routes
+    
+worker = None
+
+# Server Routes
 app = Flask(__name__, static_folder="static")
-# Default route "/" displays server running message, used to check server status
+# Default route "/" displays server running message, used to check server if 
+# server is running properly
 @app.route("/", methods=["GET"])
-def route_status():
-    return app.send_static_file("status.html")
+def route_test():
+    return app.send_static_file("test.html")
 
 ## REST API
-# Rest API route "/api/style" triggers style transfer given POST body payload 
+# Rest API route "/api/style" triggers style transfer given POST style transfer
+# request payload
 @app.route("/api/style", methods=["POST"])
 def route_api_style():
     global worker
-    print("[API call]: /api/style")
-    payload = request.get_json()
-    # Queue payload to perform style transfer on worker
-    if not worker: worker = StyleWorker()
-    worker.queue.put(payload)
-    # Reply okay status
-    return json.dumps({"sucess": True}), api.STATUS_OK, {'ContentType':'application/json'}
+    print("[REST]: /api/style")
+    # Read style transfer request from body
+    transfer_request = api.TransferRequest.parse(request.data)
 
-# Rest API route "/api/pastiche/<tag>" attempts to retrieve pastiche for the
-# given tag
-@app.route("/api/pastiche/<tag>", methods=["GET"])
-def route_api_pastiche(tag):
-    global worker
-    print("[API call]: /api/pasitche for tag", tag)
-    # Check if pastiche has been generated for id
-    pastiche_path = "pastiche/{}.jpg".format(tag)
+    # Queue request to perform style transfer on worker
+    if not worker: worker = TransferWorker()
+    task_id = worker.enqueue(transfer_request)
     
-    if os.path.exists("static/" + pastiche_path):
-        # Repond with pastiche for tag id 
-        return app.send_static_file(pastiche_path), api.STATUS_OK
-    elif not worker.process.is_alive():
-        print("FATAL ERROR: style transfer worker crashed")
-        worker = None
-        return (json.dumps({"error": "Style transfer worker crashed"}), 
-                api.STATUS_FAIL, {'ContentType':'application/json'})
-    else:
-        return (json.dumps({"error": "Resource not available yet"}), 
-                api.STATUS_NOT_READY, {'ContentType':'application/json'})
+    # Return response to requester
+    response = api.TransferResponse(task_id)
+    return response.serialise(), 200, {'ContentType':'application/json'}
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=api.SERVER_PORT)
+    app.run(host='0.0.0.0', port=8989)
