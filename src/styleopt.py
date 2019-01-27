@@ -77,7 +77,7 @@ def callback_tensorboard(graph, feed, i_epoch):
 # epoch number i_epoch and feed dict to run the graph
 def callback_progress(graph, feed, i_epoch):
     loss = graph.session.run(graph.loss_op, feed_dict=feed)
-    print("[{}] loss: {:e}".format(i_epoch, loss))
+    print("[{}/{}] loss: {:e}".format(i_epoch, graph.settings["n_epochs"], loss))
 
     
 # Callback to display current pastiche given transfuse graph and current
