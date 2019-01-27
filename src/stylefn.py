@@ -23,9 +23,9 @@ SETTINGS = {
     "image_shape": (512, 512, 3),
 
     # Loss computation weights
-    "content_weight": 7.5e0,
-    "style_weight": 5e2,
-    "denoise_weight": 2e2,
+    "content_weight": 1,
+    "style_weight": 1e+5,
+    "denoise_weight": 1e-3,
 
     # Layers for feature extraction
     "content_layers": ['block4_conv2'],
@@ -55,9 +55,9 @@ def crop_center(image):
 
 # Preprocesses the image by the given Pillow image
 # Resizes image to the given target shape
-# swaps the image channels to BGR and subtracts the RGB mean value
+# swaps the image channels to BGR and subtracts the BGR mean value
 # Returs the preprocessed image
-IMG_RGB_MEAN = (103.939, 116.779, 123.68)
+IMG_BGR_MEAN = np.asarray((103.939, 116.779, 123.68))
 def preprocess_image(image, shape):
     # Center crop so we can resize without distortion
     # Resize image to standardise input
@@ -65,30 +65,26 @@ def preprocess_image(image, shape):
     image = image.resize(shape[:-1])
     img_mat = np.array(image, dtype="float32")
     
-    # Subtract mean value 0 - red, 1 - blue, 2 - green
-    img_mat[:, :, 0] -= IMG_RGB_MEAN[0]
-    img_mat[:, :, 1] -= IMG_RGB_MEAN[1]
-    img_mat[:, :, 2] -= IMG_RGB_MEAN[2]
-
     # Swap RGB to BGR
     img_mat = img_mat[:, :, ::-1]
+    # Subtract BGR mean value
+    img_mat -= IMG_BGR_MEAN
+
     return img_mat
 
 # Reverses the preprocessing done on the given matrix
 # Reshapes the image to the given target shape
-# swaps the image channels to RGB and adds the RGB mean value
+# adds the BGR mean value and swaps the image channels to RGB
 # Clips image values to valid range and converts matrix to Pillow image
 # Returns deprocessed image
 def deprocess_image(img_mat, shape):
     img_mat = np.copy(img_mat)
     img_mat = np.reshape(img_mat, shape)
+
+    # Add BGR mean value 
+    img_mat += IMG_BGR_MEAN
     # Swap BGR to RGB
     img_mat = img_mat[:, :, ::-1]
-
-    # Add mean value 0 - red, 1 - blue, 2 - green
-    img_mat[:, :, 0] += IMG_RGB_MEAN[0]
-    img_mat[:, :, 1] += IMG_RGB_MEAN[1]
-    img_mat[:, :, 2] += IMG_RGB_MEAN[2]
 
     # Convert to image
     img_mat = np.clip(img_mat, 0, 255).astype('uint8')

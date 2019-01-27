@@ -107,6 +107,10 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
     content = stylefn.preprocess_image(content_image, image_shape)
     style = stylefn.preprocess_image(style_image, image_shape)
 
+    # Define limits for generated pastiche 
+    min_limits = - stylefn.IMG_BGR_MEAN
+    max_limits = 255.0 - stylefn.IMG_BGR_MEAN
+
     # Build style transfer graph
     pastiche_init = np.random.uniform(size=image_shape) * 255.0 - 128.0
     graph = TransfuseGraph(pastiche_init=pastiche_init, settings=settings)
@@ -117,6 +121,11 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
     feed = {graph.content_op: content, graph.style_op: style}
     n_epochs = settings["n_epochs"] 
     for i_epoch in range(1, n_epochs + 1):
+        # Clip the pastiche to ensure values say within limits
+        clipped_pastiche_op = tf.clip_by_value(graph.pastiche_op, 
+                                               min_limits, max_limits)
+        graph.pastiche_op.assign(clipped_pastiche_op)
+
         # Perform training setup
         session.run(graph.train_op, feed_dict=feed)
     
@@ -138,6 +147,7 @@ if __name__ == "__main__":
         "image_shape": (32, 32, 3)
     }
     pastiche_image = transfer_style(content_image, style_image, settings=settings,
-                                    callbacks=[callback_pastiche, callback_progress])
+                                    callbacks=[callback_pastiche, callback_progress],
+                                    callback_step=20)
     
     pastiche_image.save("pastiche.jpg")
