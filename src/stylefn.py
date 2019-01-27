@@ -145,7 +145,7 @@ def build_content_loss(pastiche_op, content_op, content_layers):
         content_feature_ops = extractor(content_op)
         
         # Compute content loss
-        loss_op = tf.reduce_sum(tf.squared_difference(pastiche_feature_ops,
+        loss_op = tf.reduce_mean(tf.squared_difference(pastiche_feature_ops,
                                                        content_feature_ops), 
                                 name="content_loss")
 
