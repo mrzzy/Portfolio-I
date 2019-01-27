@@ -26,7 +26,7 @@ SETTINGS = {
     "image_shape": (512, 512, 3),
 
     # Optimisation settings
-    "learning_rate": 100,
+    "learning_rate": 10,
     "n_epochs": 1000,
 }
 
@@ -60,7 +60,9 @@ class TransfuseGraph:
                                           self.style_op, self.settings)
     
         # Setup optimisation
-        optimizer = tf.train.AdamOptimizer(learning_rate=self.settings["learning_rate"])
+        # Adam hyperparameters borrowed from jcjohnson/neural-style
+        optimizer = tf.train.AdamOptimizer(learning_rate=self.settings["learning_rate"],
+                                           beta1=0.99, epsilon = 1e-1)
         self.train_op = optimizer.minimize(self.loss_op, var_list=[self.pastiche_op])
 
         self.session = K.get_session()
