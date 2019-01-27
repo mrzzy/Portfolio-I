@@ -24,8 +24,8 @@ SETTINGS = {
 
     # Loss computation weights
     "content_weight": 1,
-    "style_weight": 1e+5,
-    "denoise_weight": 1e-3,
+    "style_weight": 4,
+    "denoise_weight": 0,
 
     # Layers for feature extraction
     "content_layers": ['block4_conv2'],
@@ -144,10 +144,14 @@ def build_content_loss(pastiche_op, content_op, content_layers):
         pastiche_feature_ops = extractor(pastiche_op)
         content_feature_ops = extractor(content_op)
         
+        # Determine scale factor 4 * N  * M 
+        op_shape = pastiche_feature_ops[0].shape.as_list()
+        scale_factor = (4 * op_shape[3] * op_shape[1] * op_shape[2])
+
         # Compute content loss
-        loss_op = tf.reduce_mean(tf.squared_difference(pastiche_feature_ops,
+        loss_op = tf.reduce_sum(tf.squared_difference(pastiche_feature_ops,
                                                        content_feature_ops), 
-                                name="content_loss")
+                                name="content_loss") / scale_factor
 
         # Track content loss with tensorboard
         loss_summary = tf.summary.scalar("content_loss", loss_op)
@@ -179,7 +183,7 @@ def build_style_loss(pastiche_op, style_op, style_layers):
 
                 # Determine scale factor 4 * N ^ 2 * M ^ 2
                 op_shape = pastiche_feature_op.shape.as_list()
-                scale_factor = (4 * (op_shape[-1] ** 2) * 
+                scale_factor = (4 * (op_shape[3] ** 2) * 
                                 ((op_shape[1] * op_shape[2]) ** 2))
 
                 # Compute style loss for layer
