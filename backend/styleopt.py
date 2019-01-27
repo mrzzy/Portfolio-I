@@ -112,7 +112,7 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
     max_limits = 255.0 - stylefn.IMG_BGR_MEAN
 
     # Build style transfer graph
-    pastiche_init = np.random.uniform(size=image_shape) * 255.0 - 128.0
+    pastiche_init = np.random.uniform(size=image_shape) * 255.0 - 127.5
     graph = TransfuseGraph(pastiche_init=pastiche_init, settings=settings)
     session = graph.session
     session.run(tf.global_variables_initializer())
@@ -142,10 +142,11 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
 if __name__ == "__main__":
     content_image = Image.open("data/Tuebingen_Neckarfront.jpg")
     style_image = Image.open("data/stary_night.jpg")
-
+    
     settings = {
         "image_shape": (32, 32, 3)
     }
+
     pastiche_image = transfer_style(content_image, style_image, settings=settings,
                                     callbacks=[callback_pastiche, callback_progress],
                                     callback_step=20)
