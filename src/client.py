@@ -50,6 +50,14 @@ def parse_args():
 
     return options
 
+# Display a progress bar for the given progress (1.0-0.0)
+def display_progress(progress, bar_len=80):
+    n_bars = int(progress * bar_len)
+    n_not_bars = bar_len - n_bars
+    progress_percent = progress * 100.0
+    print(n_bars * "#" + n_not_bars * " " + " {:.1f}%".format(progress_percent), end="\r")
+
+
 if __name__ == "__main__":
     # Read program options
     options = parse_args()
@@ -66,4 +74,24 @@ if __name__ == "__main__":
     request = api.TransferRequest(content_image, style_image, settings)
     r = requests.post("http://" + server + "/api/style", data=request.serialise());
     response = api.TransferResponse.parse(r.text)
-    if verbose: print("Server assigns task id: ", response.ID)
+    task_id = response.ID
+    if verbose: print("Server assigns task id: ", task_id)
+
+    # Wait for server to complete style transfer
+    is_pastiche_ready = False
+    while not is_pastiche_ready:
+        if verbose: print("Sending transfer status request to server...")
+        r = requests.get("http://" + server + "/api/status/" + task_id)
+        if r.status_code == 404:
+            raise Exception("FATAL: Server disowned style transfer task")
+        elif r.status_code == 500:
+            raise Exception("FATAL: Server encountered internal error processing style transfer task")
+    
+        # Read server status response
+        response = api.StatusResponse.parse(r.text)
+        progress = response.progress
+        display_progress(progress)
+        
+        # Stop waiting if style transfer is completed
+        if progress == 1.0: break
+        time.sleep(1)

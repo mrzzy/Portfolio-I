@@ -10,7 +10,7 @@ import styleopt
 
 from PIL import Image
 from flask import Flask, request
-from multiprocessing import Process, Queue
+from multiprocessing import Process, Queue, Manager
 
 ## Tasking
 # Style transfer worker that runs style transfers task as defined by the 
@@ -19,8 +19,12 @@ class TransferWorker:
     def __init__(self, queue=Queue(), verbose=True):
         self.queue = queue
         self.verbose = verbose
+        
+        # Setup shared style transfer process log
+        manager = Manager()
+        self.log = manager.dict()
 
-        # Setup workers process
+        # Setup worker process
         self.process = Process(target=self.run)
         self.process.start()
     
@@ -34,10 +38,12 @@ class TransferWorker:
             "ID": task_id
         }
 
+        # Queue task for style transfer
+        self.log[task_id] = 0.0
         self.queue.put(task)
 
         return task_id
-        
+
     # Run loop of worker
     def run(self):
         while True:
@@ -50,20 +56,40 @@ class TransferWorker:
             content_image = request.content_image
             style_image = request.style_image
             settings = request.settings
-
+    
             # Perform style transfer
-            if self.verbose: print("[TransferWorker]: processing payload: ", task_id)
-            pastiche_image = styleopt.transfer_style(content_image, style_image, 
-                                            settings=settings,
-                                            callbacks=[styleopt.callback_progress])
+            # Callback to record status of style transfer in worker log
+            def callback_status(graph, feed, i_epoch):
+                n_epoch = settings["n_epochs"]
+                self.log[task_id] = i_epoch / n_epoch
+                
+            if self.verbose: print("[TransferWorker]: processing task: ", task_id)
+            try:
+                pastiche_image = styleopt.transfer_style(content_image, style_image, 
+                                                settings=settings,
+                                                callbacks=[styleopt.callback_progress,
+                                                           callback_status])
+            except Exception as e:
+                # Style transfer failed for some reason
+                print("[TransferWorker]: FATAL: style transfer failed for task:",
+                      task_id)
+                print(e.message)
+                
+                self.log[task_id] = -1.0 # Mark failure for task in log
         
             # Save results of style transfer
             if self.verbose: print("[TransferWorker]: completed payload: ", task_id)
             if not os.path.exists("static/pastiche"): os.mkdir("static/pastiche")
             pastiche_image.save("static/pastiche/{}.jpg".format(task_id))
-            
+
+    # Check the status of the worker task specified by task_id
+    # Returns None if no task for the given task_id is found
+    # Returns -1.0 if style transfer task failed for some reason
+    def check_status(self, task_id):
+        if not task_id in self.log: return None
+        else: return self.log[task_id]
     
-worker = None
+worker = TransferWorker()
 
 # Server Routes
 app = Flask(__name__, static_folder="static")
@@ -78,18 +104,35 @@ def route_test():
 # request payload
 @app.route("/api/style", methods=["POST"])
 def route_api_style():
-    global worker
     print("[REST]: /api/style")
     # Read style transfer request from body
     transfer_request = api.TransferRequest.parse(request.data)
 
     # Queue request to perform style transfer on worker
-    if not worker: worker = TransferWorker()
     task_id = worker.enqueue(transfer_request)
     
     # Return response to requester
     response = api.TransferResponse(task_id)
     return response.serialise(), 200, {'ContentType':'application/json'}
+
+# Rest API route "/api/status" retrieves the current status of style transfer
+# for the given task_id.
+@app.route("/api/status/<task_id>", methods=["GET"])
+def route_api_status(task_id):
+    print("[REST]: /api/status")
+
+    # Query work current status 
+    progress = worker.check_status(task_id)
+    if progress == None:
+        status_code = 404 # Task for the given ID not found
+    elif progress == -1.0:
+        status_code = 500 # Internal server error in style transfer
+    else:
+        status_code = 200
+
+    # Return status response to request 
+    response = api.StatusResponse(progress)
+    return response.serialise(), status_code, {'ContentType':'application/json'}
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8989)
