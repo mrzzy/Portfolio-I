@@ -108,7 +108,7 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
     style = stylefn.preprocess_image(style_image, image_shape)
 
     # Build style transfer graph
-    pastiche_init = np.random.normal(size=image_shape) * 255.0 - 128.0
+    pastiche_init = np.random.uniform(size=image_shape) * 255.0 - 128.0
     graph = TransfuseGraph(pastiche_init=pastiche_init, settings=settings)
     session = graph.session
     session.run(tf.global_variables_initializer())
