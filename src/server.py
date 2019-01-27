@@ -27,6 +27,9 @@ class TransferWorker:
         # Setup worker process
         self.process = Process(target=self.run)
         self.process.start()
+
+        # Setup directory to generated pastiches
+        if not os.path.exists("static/pastiche"): os.mkdir("static/pastiche")
     
     # Enqeue a new style transfer task parameterised by the given style 
     # transfer request. Returns an uuid that uniquely identifies the task
@@ -79,7 +82,7 @@ class TransferWorker:
         
             # Save results of style transfer
             if self.verbose: print("[TransferWorker]: completed payload: ", task_id)
-            if not os.path.exists("static/pastiche"): os.mkdir("static/pastiche")
+        
             pastiche_image.save("static/pastiche/{}.jpg".format(task_id))
 
     # Check the status of the worker task specified by task_id
@@ -133,6 +136,27 @@ def route_api_status(task_id):
     # Return status response to request 
     response = api.StatusResponse(progress)
     return response.serialise(), status_code, {'ContentType':'application/json'}
+
+# Rest API route "/api/pastiche" retrieves the pastiche 
+# for the given task_id.
+@app.route("/api/pastiche/<task_id>", methods=["GET"])
+def route_api_pastiche(task_id):
+    print("[REST]: /api/pastiche")
+
+    # Query work current status 
+    progress = worker.check_status(task_id)
+    if progress == None:
+        status_code = 404 # Task for the given ID not found
+        return "", status_code
+    elif progress == -1.0:
+        status_code = 500 # Internal server error in style transfer
+        return "", status_code
+    elif progress >= 0.0 and progress < 1.0:  
+        status_code = 202 # Style transfer genrated pastiche not yet ready
+        return "", status_code
+    else:
+        status_code = 200
+        return app.send_static_file("pastiche/{}.jpg".format(task_id)), status_code
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=8989)

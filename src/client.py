@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 
 from PIL import Image
 from util import decode_image
+from io import BytesIO
 
 # Parse command line args for the client creating program options
 # Returns the parsed program options
@@ -26,6 +27,7 @@ def parse_args():
     parser.add_argument("-d", nargs="?", type=float, help="how much weight to given produce a smooth image")
     parser.add_argument("-n", nargs="?", type=int, help="how many iterations of style transer to perform")
     parser.add_argument("-r", nargs="?", type=int, help="the resolution to perform style transfer (r x r)")
+    parser.add_argument("-o", nargs="?", type=str, help="the path in which to output the generated pastiche")
     parser.add_argument("server", help="<address>:<port> the address and port of the style transfer server")
     parser.add_argument("content", help="path to the content image.")
     parser.add_argument("style", help="path to the style image")
@@ -43,6 +45,7 @@ def parse_args():
     options = {
         "content_path": args.content,
         "style_path": args.style,
+        "pastiche_path": args.o if not args.o is None else "pastiche.jpg",
         "settings": settings,
         "verbose": args.v,
         "server": args.server
@@ -80,7 +83,7 @@ if __name__ == "__main__":
     # Wait for server to complete style transfer
     is_pastiche_ready = False
     while not is_pastiche_ready:
-        if verbose: print("Sending transfer status request to server...")
+        if verbose: print("Requesting transfer status from server...")
         r = requests.get("http://" + server + "/api/status/" + task_id)
         if r.status_code == 404:
             raise Exception("FATAL: Server disowned style transfer task")
@@ -95,3 +98,17 @@ if __name__ == "__main__":
         # Stop waiting if style transfer is completed
         if progress == 1.0: break
         time.sleep(1)
+
+    # Retrieve pastiche from server
+    if verbose: print("Requesting pastiche from server...")
+    r = requests.get("http://" + server + "/api/pastiche/" + task_id)
+    if r.status_code == 404:
+        raise Exception("FATAL: Server disowned style transfer task")
+    elif r.status_code == 500:
+        raise Exception("FATAL: Server encountered internal error processing style transfer task")
+    elif r.status_code == 202:
+        raise Exception("FATAL: Server says pastiche not yet ready, but status request indicates that it is")
+    
+    # Write pastiche to disk
+    pastiche_image = Image.open(BytesIO(r.content))
+    pastiche_image.save(options["pastiche_path"])

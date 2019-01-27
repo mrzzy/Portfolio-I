@@ -19,10 +19,12 @@ GET /api/status/<id>
     response: {
         progress: 0-1.0 progress of style transfer
     }
+        404 - style transfer not found,
 
 GET /api/pastiche/<id>
     http status: 
         200 - OK,
+        404 - style transfer not found,
         202 - not yet ready,
         500 - style transfer for ID failed for some reason
     response: OK only - JPEG image of pastiche
