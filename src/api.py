@@ -8,6 +8,8 @@ import uuid
 from abc import ABC, abstractmethod
 from util import encode_image, decode_image
 
+# Server port
+SERVER_PORT = 8989
 
 # Represents a style transfer request
 class TransferRequest:
@@ -71,7 +73,6 @@ class TransferResponse:
         }
     
         return json.dumps(contents)
-
 
 # Represents a style transfer status response
 class StatusResponse:

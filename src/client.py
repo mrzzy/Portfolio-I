@@ -28,7 +28,7 @@ def parse_args():
     parser.add_argument("-n", nargs="?", type=int, help="how many iterations of style transer to perform")
     parser.add_argument("-r", nargs="?", type=int, help="the resolution to perform style transfer (r x r)")
     parser.add_argument("-o", nargs="?", type=str, help="the path in which to output the generated pastiche")
-    parser.add_argument("server", help="<address>:<port> the address and port of the style transfer server")
+    parser.add_argument("server", help="<address> the address of the style transfer server")
     parser.add_argument("content", help="path to the content image.")
     parser.add_argument("style", help="path to the style image")
     args = parser.parse_args()
@@ -64,7 +64,7 @@ def display_progress(progress, bar_len=80):
 if __name__ == "__main__":
     # Read program options
     options = parse_args()
-    server = options["server"]
+    server = options["server"] + ":" + api.SERVER_PORT
     verbose = options["verbose"]
     
     # Read content & style images
@@ -80,7 +80,7 @@ if __name__ == "__main__":
     task_id = response.ID
     if verbose: print("Server assigns task id: ", task_id)
 
-    # Wait for server to complete style transfer
+    # Wait for server to complete style tran + ":" + apsfer
     is_pastiche_ready = False
     while not is_pastiche_ready:
         if verbose: print("Requesting transfer status from server...")

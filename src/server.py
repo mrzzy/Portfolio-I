@@ -159,4 +159,4 @@ def route_api_pastiche(task_id):
         return app.send_static_file("pastiche/{}.jpg".format(task_id)), status_code
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=8989)
+    app.run(host='0.0.0.0', port=api.SERVER_PORT)
