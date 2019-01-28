@@ -64,7 +64,7 @@ def display_progress(progress, bar_len=80):
 if __name__ == "__main__":
     # Read program options
     options = parse_args()
-    server = options["server"] + ":" + api.SERVER_PORT
+    server = options["server"] + ":" + str(api.SERVER_PORT)
     verbose = options["verbose"]
     
     # Read content & style images
