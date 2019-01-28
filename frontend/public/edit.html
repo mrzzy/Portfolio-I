@@ -6,6 +6,8 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<!-- font links -->
 	<link href="https://fonts.googleapis.com/css?family=Major+Mono+Display|Staatliches" rel="stylesheet">
+
+    <!-- client side js -->
 </head>
 <body>
 	<header>
@@ -18,27 +20,28 @@
 	    			
 	    		</nav>
 	</header>
-	<section class="container-edit">
-		<div class="steps">
-			<h3>Step 1: Choose your image</h3>
-			
-			<input type="file" name="file" id="file" class="inputfile" />
-			<label for="file"><img src="/assets/image/camera.jpg"></label>
-		</div>
-		<div class="steps">
-			<h3>Step 2: Choose your prefered art style</h3>
-			
-			<input type="file" name="file" id="file" class="inputfile" />
-			<label for="file"><img src="/assets/image/painting.jpg"></label>
-		</div>
+    <main>
+        <section class="container-edit">
+            <div class="steps">
+                <h3>Step 1: Choose your image</h3>
+                
+                <input type="file" name="content" id="file" class="inputfile" />
+                <label for="file"><img src="/assets/image/camera.jpg"></label>
+            </div>
+            <div class="steps">
+                <h3>Step 2: Choose your prefered art style</h3>
+                
+                <input type="file" name="style" id="file" class="inputfile" />
+                <label for="file"><img src="/assets/image/painting.jpg"></label>
+            </div>
+        </section>
 
-	</section>
+        <button class="transfer"> Style Transfer </button>
+    </main>
 
 	<footer>
 		<p> &copy; Adeline Wong, Zhan Yan, Tracy T03</p>
-
 	</footer>
-
 
 </body>
 </html>
