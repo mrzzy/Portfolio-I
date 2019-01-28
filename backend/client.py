@@ -26,6 +26,7 @@ def parse_args():
     parser.add_argument("-s", nargs="?", type=float, help="how much weight to style reproduction")
     parser.add_argument("-d", nargs="?", type=float, help="how much weight to given produce a smooth image")
     parser.add_argument("-n", nargs="?", type=int, help="how many iterations of style transer to perform")
+    parser.add_argument("-l", nargs="?", type=float, help="the learning rate to pass to the optimizer")
     parser.add_argument("-r", nargs="?", type=int, help="the resolution to perform style transfer (r x r)")
     parser.add_argument("-o", nargs="?", type=str, help="the path in which to output the generated pastiche")
     parser.add_argument("server", help="<address> the address of the style transfer server")
@@ -39,6 +40,7 @@ def parse_args():
     if not args.s is None: settings["style_weight"] = args.s
     if not args.d is None: settings["denoise_weight"] = args.d
     if not args.n is None: settings["n_epochs"] = args.n
+    if not args.l is None: settings["learning_rate"] = args.l
     if not args.r is None: settings["image_shape"] = (args.r, args.r, 3)
 
     # Build program options
