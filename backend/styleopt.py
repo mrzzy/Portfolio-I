@@ -64,6 +64,9 @@ class TransfuseGraph:
         optimizer = tf.train.AdamOptimizer(learning_rate=self.settings["learning_rate"],
                                            beta1=0.99, epsilon = 1e-1)
         self.train_op = optimizer.minimize(self.loss_op, var_list=[self.pastiche_op])
+        
+        # Setup tensorboard
+        self.summary_op = tf.summary.merge_all()
 
         self.session = K.get_session()
 
