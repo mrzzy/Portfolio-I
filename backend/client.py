@@ -36,7 +36,7 @@ def parse_args():
 
     # Construct style transfer settings
     settings = {}
-    if not args.c is None: setting["content_weight"] = args.c
+    if not args.c is None: settings["content_weight"] = args.c
     if not args.s is None: settings["style_weight"] = args.s
     if not args.d is None: settings["denoise_weight"] = args.d
     if not args.n is None: settings["n_epochs"] = args.n
