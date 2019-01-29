@@ -1,0 +1,30 @@
+Style transfer REST API
+PUT /api/style:
+    payload: json {
+        content: content jpeg image base64 encoded
+        style: style jpeg image base64 encoded
+        [settings]: optional style transfer settings overrides
+    }
+    
+    http status: 200 
+    response: json {
+        id: uuid of the styled image 
+    }
+    
+GET /api/status/<id>
+    http status: 
+        200 OK,
+        404 - style transfer not found,
+        500 - style transfer for ID failed for some reason
+    response: {
+        progress: 0-1.0 progress of style transfer
+    }
+        404 - style transfer not found,
+
+GET /api/pastiche/<id>
+    http status: 
+        200 - OK,
+        404 - style transfer not found,
+        202 - not yet ready,
+        500 - style transfer for ID failed for some reason
+    response: OK only - JPEG image of pastiche

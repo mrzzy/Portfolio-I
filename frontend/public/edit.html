@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Start Editing</title>
+	<link rel="stylesheet" type="text/css" href="/assets/css/style.css">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<!-- font links -->
+	<link href="https://fonts.googleapis.com/css?family=Major+Mono+Display|Staatliches" rel="stylesheet">
+
+    <! -- js dependencies -->
+    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- client side js -->
+    <script defer src="/assets/js/api.js"></script>
+    <script defer src="/assets/js/edit.js"></script>
+</head>
+<body>
+	<header>
+		<span id ="Pastiche">Pastiche</span>
+	    		<input type="checkbox" id="toggle">
+	    		<label for="toggle" id="toggleButton">&#9776;</label>
+	    		<nav class="">
+	    			<a href="/" class="button">Home</a>
+	    			<a href="#edit"class="button">Edit</a>
+	    			
+	    		</nav>
+	</header>
+    <main>
+        <section class="container-edit">
+            <div class="steps content picker">
+                <h3>Step 1: Choose your image</h3>
+                
+                <input type="file" class="inputfile" />
+                <label for="file"><img src="/assets/image/camera.jpg"></label>
+            </div>
+            <div class="steps style picker">
+                <h3>Step 2: Choose your prefered art style</h3>
+                
+                <input type="file" class="inputfile" />
+                <label for="file"><img src="/assets/image/painting.jpg"></label>
+            </div>
+        </section>
+
+        <button id="style-transfer"> Style Transfer </button>
+    </main>
+
+	<footer>
+		<p> &copy; Adeline Wong, Zhan Yan, Tracy T03</p>
+	</footer>
+
+</body>
+</html>
