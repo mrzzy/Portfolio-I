@@ -28,7 +28,7 @@ SETTINGS = {
     "denoise_weight": 4e-2,
 
     # Layers for feature extraction
-    "content_layers": ['block4_conv2'],
+    "content_layers": ['block3_conv3'],
     "style_layers": ['block1_conv2', 'block2_conv1', 'block3_conv1', 'block4_conv1',
                   'block5_conv1'],
     "denoising_layers": [ "input_1" ]
