@@ -79,23 +79,9 @@ $(document).ready(() => {
             return;
         }
     
-        readFileInput(styleFileInput, FileDataType.binary, (styleImageData) => {
-            readFileInput(contentFileInput, FileDataType.binary, (contentImageData) => {
-                // Send style transfer request
-                const requestJSON = buildTransferRequest(contentImageData,styleImageData);
-                fetch("http://localhost:8989/api/style", {
-                    method: "POST",
-                    body: requestJSON
-                })
-                .then((response) => {
-                    // Check response status
-                    if(response.status != 200) {
-                        throw "TransferRequestError: Could not submit style transfer request";
-                    }
-
-                    return response.json();
-                })
-                .then((transferResponse) => {
+        readFileInput(styleFileInput, FileDataType.binary, (styleData) => {
+            readFileInput(contentFileInput, FileDataType.binary, (contentData) => {
+                sendTransferRequest(styleData, contentData, {}, (transferResponse) => {
                     // Wait for style transfer to complete on server
                     const taskID = transferResponse.id
                     console.log("Registered task:" + taskID);

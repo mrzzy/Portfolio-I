@@ -21,6 +21,31 @@ function buildTransferRequest(contentData, styleData, settings={}) {
     });
 }
 
+/* Build and send a  style transfer request for the given content and style image data
+ * and optional settings overrides.
+ * Passes transfer response to the 
+*/
+function sendTransferRequest(contentData, styleData, settings, onResponse) {
+    const requestJSON = buildTransferRequest(contentData, styleData, settings);
+    console.log(requestJSON);
+    console.log(settings);
+
+    // Send style transfer request
+    fetch("http://localhost:8989/api/style", {
+        method: "POST",
+        body: requestJSON
+    })
+    .then((response) => {
+        // Check response status
+        if(response.status != 200) {
+            throw "TransferRequestError: Could not submit style transfer request";
+        }
+
+        return response.json();
+    })
+    .then((transferResponse) => onResponse(transferResponse));
+}
+
 /* Check the progress the task for the given task ID
  * Passes the progress as a float (0-1.0) to the given callback
 */
