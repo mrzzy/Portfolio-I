@@ -55,6 +55,8 @@ a{
 }
 .button {
     margin: 2em 1em;
+    font-size: 20px;
+    color: black;
     background-color: rgba(0,0,0,0);
     display: flex;
 }
@@ -171,6 +173,7 @@ a{
 }
 .process_box h3 {
     font-size: 30px;
+    display: flex;
     justify-content: center;
     color: white;
     font-family: 'Major Mono Display', monospace;
@@ -243,6 +246,7 @@ footer .designer {
     flex-wrap: wrap;
     justify-content: center;
     margin: 0px auto;
+    height: 350px;
 }
 
 /*each tour*/
@@ -363,6 +367,9 @@ footer .designer {
 
 .shadow:hover {
     box-shadow: 0 8px 16px 0 rgba(0,0,0,1);
+}
+.designer {
+    margin-bottom: 0;
 }
 /* For mobile phones: */
 @media only screen and (max-width: 400px) {
