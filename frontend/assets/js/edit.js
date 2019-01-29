@@ -73,7 +73,7 @@ $(document).ready(() => {
         const styleFileInput = $(".style.picker input[type='file']").get(0);
         const contentFileInput = $(".content.picker input[type='file']").get(0);
 
-        // Check if use has select the required fiels
+        // Check if use has select the required files
         if(styleFileInput.files.length != 1 || contentFileInput.files.length != 1) {
             alert("Please select content & style images");
             return;
@@ -86,7 +86,24 @@ $(document).ready(() => {
                 fetch("http://localhost:8989/api/style", {
                     method: "POST",
                     body: requestJSON
-                }).then((reponse) => console.log(response.json()));
+                })
+                .then((response) => {
+                    // Check response status
+                    if(response.status != 200) {
+                        throw "TransferRequestError: Could not submit style transfer request";
+                    }
+
+                    return response.json();
+                })
+                .then((transferResponse) => {
+                    // Wait for style transfer to complete on server
+                    const taskID = transferResponse.id
+                    console.log("Registered task:" + taskID);
+
+                    window.setInterval(() => {
+                        checkTransferProgress(taskID, (progress) => console.log(progress));
+                    }, 1000);
+                });
             });
         });
     });
