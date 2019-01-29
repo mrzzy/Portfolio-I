@@ -63,7 +63,7 @@ class TransferWorker:
             # Perform style transfer
             # Callback to record status of style transfer in worker log
             def callback_status(graph, feed, i_epoch):
-                n_epoch = settings["n_epochs"]
+                n_epoch = graph.settings["n_epochs"]
                 self.log[task_id] = i_epoch / n_epoch
                 
             if self.verbose: print("[TransferWorker]: processing task: ", task_id)
@@ -159,6 +159,13 @@ def route_api_pastiche(task_id):
     else:
         status_code = 200
         return app.send_static_file("pastiche/{}.jpg".format(task_id)), status_code
+
+# Cross origin pain in the ass
+@app.after_request 
+def handle_cors(response):
+    header = response.headers
+    header['Access-Control-Allow-Origin'] = '*'
+    return response
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=api.SERVER_PORT)
