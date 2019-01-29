@@ -184,8 +184,9 @@ a{
     display: flex;
     justify-content: center;
     color: white;
-    font-size: 20px;
-    font-family: 'Oswald', sans-serif;
+    font-size: 25px;
+    margin-bottom: 45px;
+    font-family: 'Fjalla One', sans-serif;
 }
 
 .process .box{
@@ -241,18 +242,44 @@ footer .designer {
 }
 
 /*im trying credit page*/
-.member {
+/*.member {
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     margin: 0px auto;
     height: 350px;
+}*/
+
+/*each tour*/
+/*.members{
+    width: 250px;
+    margin: 10px;
+
+}*/
+/*separating the image by using display: block;*/
+/*.members img{
+    display: block;
+    height: 250px;
+    margin: 0px auto;
+    width: 100%;
+
+    border-radius: 60%;
+    border-style: solid;
+    border-color: white
+}
+*/
+
+.member {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin: 0px auto;
 }
 
 /*each tour*/
 .members{
     width: 250px;
-    margin: 10px;
+    margin: 25px;
 
 }
 /*separating the image by using display: block;*/
@@ -265,7 +292,28 @@ footer .designer {
     border-style: solid;
     border-color: white
 }
+.member p{
+    display: flex;
+    justify-content: center;
+    font-size: 30px;
+    font-family: 'Permanent Marker', cursive;
+}
+.blog {
+    display: flex;
+    justify-content: center;
+    font-size: 35px;
+    font-family: 'Special Elite', cursive;
+}
+.member span {
+    display: flex;
+    justify-content: center;  
+    margin-top: 15px; 
+    font-size: 20px;
+    font-family: 'Special Elite', cursive;
+}
 
+/*font-family: 'Special Elite', cursive;
+}
 /*edit html page*/
 /*creating the image and art buttons*/
 /*they will ask the user to choose the images and art styles that they want to remix together*/
