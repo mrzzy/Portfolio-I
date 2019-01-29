@@ -206,7 +206,7 @@ footer{
     margin: 5%;
 }
 
-button.transfer {
+button#style-transfer {
     display: block;
     font-family: 'Staatliches', cursive;
     border-radius: 5pt;

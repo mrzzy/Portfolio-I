@@ -32,20 +32,29 @@ function readFileInput(input, type, onread) {
     }
 }
 
-/* Build a style transfer request for the given content and style image data
- * and optional settings overrides
- * Returns the request serialised in the json format
-*/
-function buildTransferRequest(contentData, styleData, settings={}) {
-    // Base 64 encode image data for transmission
-    return JSON.stringify({
-        content_image: window.btoa(contentData),
-        style_image: window.btoa(styleData),
-        settings: settings
-    });
+/* Render the image pickers on this page with the selected images */
+function renderImagePickers() {
+    const styleFileInput = $(".style.picker input[type='file']").get(0);
+    const contentFileInput = $(".content.picker input[type='file']").get(0);
+    
+    const renderImage = (selector) => (
+        (imageData) => {
+            const imageElement = $(selector).find("img");
+            imageElement.attr("src", imageData);
+        }
+    );
+
+    if(styleFileInput.files.length == 1) {
+        readFileInput(styleFileInput, FileDataType.url, renderImage(".picker.style"));
+    } 
+    if(contentFileInput.files.length == 1) {
+        readFileInput(contentFileInput, FileDataType.url, renderImage(".picker.content"));
+    }
 }
 
 $(document).ready(() => {
+    renderImagePickers();
+
     // Show file picker on click
     $(".picker input[type='file']").click(function (event) {
         event.stopPropagation();
@@ -56,9 +65,29 @@ $(document).ready(() => {
 
     // Update page with selected image on user selection of image
     $(".picker").change(function (event) {
-        readFileInput(event.target, FileDataType.url, (imageData) => {
-            const imageElement = $(this).find("img");
-            imageElement.attr("src", imageData);
-        }, FileDataType.url);
+        renderImagePickers();
+    });
+
+    // Trigger style transfer on server
+    $("button#style-transfer").click(function (event) {
+        const styleFileInput = $(".style.picker input[type='file']").get(0);
+        const contentFileInput = $(".content.picker input[type='file']").get(0);
+
+        // Check if use has select the required fiels
+        if(styleFileInput.files.length != 1 || contentFileInput.files.length != 1) {
+            alert("Please select content & style images");
+            return;
+        }
+    
+        readFileInput(styleFileInput, FileDataType.binary, (styleImageData) => {
+            readFileInput(contentFileInput, FileDataType.binary, (contentImageData) => {
+                // Send style transfer request
+                const requestJSON = buildTransferRequest(contentImageData,styleImageData);
+                fetch("http://localhost:8989/api/style", {
+                    method: "POST",
+                    body: requestJSON
+                }).then((reponse) => console.log(response.json()));
+            });
+        });
     });
 });
