@@ -71,14 +71,16 @@ class TransferWorker:
                 pastiche_image = styleopt.transfer_style(content_image, style_image, 
                                                 settings=settings,
                                                 callbacks=[styleopt.callback_progress,
+                                                           styleopt.callback_tensorboard,
                                                            callback_status])
             except Exception as e:
                 # Style transfer failed for some reason
                 print("[TransferWorker]: FATAL: style transfer failed for task:",
                       task_id)
-                print(e.message)
+                print(repr(e))
                 
                 self.log[task_id] = -1.0 # Mark failure for task in log
+                continue # Abadon and work on next job
         
             # Save results of style transfer
             if self.verbose: print("[TransferWorker]: completed payload: ", task_id)
