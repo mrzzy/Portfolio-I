@@ -1,0 +1,107 @@
+x::-webkit-scrollbar {
+	display: none;
+}
+
+#imageone{
+	background-image: url(../image/img1.png);
+	background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed; 
+    width: 100vw;
+    height: 100vh;
+
+}
+/*PASTICHE HEADER*/
+h1{
+	margin: auto;
+    display: flex;
+    font-size: 95px;
+    color: white;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    /*to center the header*/
+  /*justify-content: center;
+    align-items: center;*/
+}
+
+body{
+	margin: auto;
+}
+
+/* buttons at the navigation bar home edit about */
+
+header{
+	position: fixed;
+	width: 100%;
+}
+/*a.button:active {
+	background-color: #41B998;	
+	height: 0.8em;
+}*/
+a{
+	/*text-decoration: none;*/
+	color: #FFFFFF;
+	height: auto;
+
+}
+.button {
+	margin: 2em 1em;
+	background-color: rgba(0,0,0,0);
+	display: flex;
+}
+.start{
+	color: black;
+}
+nav {
+	display: flex;
+	justify-content: flex-end;
+	/*font-family: 'Libre Barcode 128 Text', cursive;*/
+}
+
+
+
+
+
+
+
+/*its for the buttons when the screen display is smaller toggle buttons*/
+
+#toggle, #toggleButton {
+    display: none;
+    float: right;
+    color: black;
+    padding: .25em 0.85em;
+    margin: .35em;
+    font-weight: 700;
+    border-radius: 5px;
+}
+
+@media only screen and (max-width: 640px) {
+    header{
+        flex-flow:row wrap;
+    }
+    nav {
+        display: none;
+        width:100%;
+    }
+
+    #toggleButton {
+        display: block;
+        margin: 1em;
+    }
+    #toggleButton {
+        display: block;
+        cursor: pointer;
+    }
+    input#toggle:checked ~ nav {
+        display: block;
+        width: 100%;
+    }
+}
+@media only screen and (max-width: 900px){
+    nav a {
+        font-size:0.8em;
+    }
+}
