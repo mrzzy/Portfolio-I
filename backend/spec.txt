@@ -19,7 +19,6 @@ GET /api/status/<id>
     response: {
         progress: 0-1.0 progress of style transfer
     }
-        404 - style transfer not found,
 
 GET /api/pastiche/<id>
     http status: 
