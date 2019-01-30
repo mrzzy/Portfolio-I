@@ -361,18 +361,34 @@ footer .designer {
     font-size: 3vw;
     margin: 5%;
 }
-#style-transfer {
+
+button#style-transfer {
     display: block;
     font-family: 'Staatliches', cursive;
     border-radius: 5pt;
+    border-style: none;
     font-weight: 100;
     font-size: 2em;
     padding-left: 1em;
     padding-right: 1em;
     padding-top: 0.4em;
     padding-bottom: 0.4em;
+    background-color: #ff8a5d;
+    color: #FFFFFF;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+  transition: all 0.3s cubic-bezier(.25,.8,.25,1);
     margin: auto;
 }
+
+button#style-transfer:hover {
+    box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+}
+
+button#style-transfer:active {
+    box-shadow: none;
+    background-color: #b94d23;
+}
+
 .final_rect h2{
     font-size: 60px;
     font-family: 'Major Mono Display', monospace;
@@ -402,8 +418,6 @@ footer .designer {
     width: 500px;
     height: 500px;
     border-radius: 50%
-
-
 }
 
 
@@ -441,23 +455,46 @@ footer .designer {
   }
 }
 */
-#shiva
+
+#progress
 {
-  width: 100px;
-    height: 100px;
-    background:#8E8D8A;;
-    -moz-border-radius: 50px;
-    -webkit-border-radius: 50px;
-    border-radius: 50px;
+    position: relative;
+    display:none;
+  width: 60vmin;
+    height: 60vmin;
   margin:auto;
+  overflow: show;
+    font-family: 'Major Mono Display', monospace;
 }
+
+#progress .background {
+    position: absolute;
+    top: 0;
+    left: 0;
+  width: 100%;
+    height: 100%;
+    background-color: #ff8a5d;
+    z-index: -1;
+    border-radius: 50%;
+    transform: scale(0.0);
+    transition: all 1s cubic-bezier(.25,.8,.25,1);
+}
+
+
 .count
 {
+    position: absolute;
+    top: 50%;
+    display:block;
+    text-align: center;
+    width: 100%;
   line-height: 100px;
-  color:white;
-  margin-left:30px;
-  font-size:25px;
+  color:black;
+  margin: auto;
+  font-size:  5.2em;
+  transform: translateY(-50%);
 }
+
 #talkbubble {
    width: 120px;
    height: 80px;
@@ -485,7 +522,7 @@ footer .designer {
 {
   font-size : 20px;
   font-color: black;
-}x  
+}  
 
 /*shadow transition*/
 
@@ -624,6 +661,7 @@ footer .designer {
         font-size:0.8em;
     }
 
+
     .process .box {
         margin: 0 auto;
         display: block;
@@ -631,3 +669,15 @@ footer .designer {
     }
 }
 
+img.pastiche {
+    display: none;
+    object-fit: contain;
+    width: 40vw;
+    margin: auto;
+    margin-bottom: 2em;
+    border-radius: 8pt;
+}
+
+.pad {
+    padding: 4vmax;
+}

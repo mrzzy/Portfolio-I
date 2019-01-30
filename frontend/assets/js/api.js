@@ -12,8 +12,6 @@ const serverURL = "http://localhost:8989";
 */
 function buildTransferRequest(contentData, styleData, settings={}) {
     // Base 64 encode image data for transmission
-    // TODO: remove hardcoded settings
-    settings.n_epochs = 2;
     return JSON.stringify({
         content_image: window.btoa(contentData),
         style_image: window.btoa(styleData),

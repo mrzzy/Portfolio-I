@@ -55,6 +55,9 @@ function renderImagePickers() {
 $(document).ready(() => {
     renderImagePickers();
 
+    // Hide the progress indicator
+    $("#progress").css("display", "none");
+
     // Show file picker on click
     $(".picker input[type='file']").click(function (event) {
         event.stopPropagation();
@@ -79,6 +82,11 @@ $(document).ready(() => {
             return;
         }
     
+        // Show progress indicator 
+        $("#progress").css("display", "block");
+        // Hide editing controls
+        $(".container-edit").css("display", "none");
+    
         readFileInput(styleFileInput, FileDataType.binary, (styleData) => {
             readFileInput(contentFileInput, FileDataType.binary, (contentData) => {
                 sendTransferRequest(styleData, contentData, {}, (transferResponse) => {
@@ -88,12 +96,20 @@ $(document).ready(() => {
 
                     const intervalToken =  window.setInterval(() => {
                         checkTransferProgress(taskID, (progress) => {
-                            console.log(progress);
+                            // Update progress indicator
+                            $("#progress .count").text(`${Math.ceil(progress * 100.0)}%`);
+                            $("#progress .background")
+                                .css("transform", `scale(${progress})`);
+                    
                             if(progress == 1.0) {
-                                // Style transfer completed
-                                // Show Pastiche on webpage 
-                                console.log("image url: "+ serverURL + 
-                                    "/api/pastiche/" + taskID);
+                                // Load completed pastiche on page
+                                console.log("Server completed style transfer");
+                                const imageURL = serverURL + "/api/pastiche/" + taskID;
+                                $("#progress").css("display", "none");
+                                $(".pastiche").css("display", "block");
+                                $(".pastiche").attr("src", imageURL);
+
+                                // Stop checking for progress as completed
                                 window.clearInterval(intervalToken);
                             }
                         });
@@ -101,18 +117,5 @@ $(document).ready(() => {
                 });
             });
         });
-    });
-});
-
-// loading bar
-$('.count').each(function () {
-    $(this).prop('Counter',0).animate({
-        Counter: $(this).text()
-    }, {
-        duration: 4000,
-        easing: 'swing',
-        step: function (now) {
-            $(this).text(Math.ceil(now));
-        }
     });
 });
