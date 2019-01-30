@@ -84,7 +84,7 @@ $(document).ready(() => {
                 sendTransferRequest(styleData, contentData, {}, (transferResponse) => {
                     // Wait for style transfer to complete on server
                     const taskID = transferResponse.id
-                    ccontentFileInputonsole.log("Registered task:" + taskID);
+                    console.log("Registered task:" + taskID);
 
                     const intervalToken =  window.setInterval(() => {
                         checkTransferProgress(taskID, (progress) => {
