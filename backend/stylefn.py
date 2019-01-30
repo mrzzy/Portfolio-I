@@ -23,12 +23,12 @@ SETTINGS = {
     "image_shape": (512, 512, 3),
 
     # Loss computation weights
-    "content_weight": 1e+5,
-    "style_weight": 5e+4,
-    "denoise_weight": 4e-2,
+    "content_weight": 1e+6,
+    "style_weight": 4e+2,
+    "denoise_weight": 2e-3,
 
     # Layers for feature extraction
-    "content_layers": ['block4_conv2'],
+    "content_layers": ['block3_conv3'],
     "style_layers": ['block1_conv2', 'block2_conv1', 'block3_conv1', 'block4_conv1',
                   'block5_conv1'],
     "denoising_layers": [ "input_1" ]
@@ -184,10 +184,6 @@ def build_style_loss(pastiche_op, style_op, style_layers, style_weight):
                 layer_loss_op = tf.reduce_sum(tf.squared_difference(pastiche_gram_op,
                                                                     style_gram_op),
                                               name=layer_loss_name)
-                
-                # Track content loss for layer with tensorboard
-                loss_summary = tf.summary.scalar(layer_loss_name, layer_loss_op)
-                
                 return layer_loss_op
 
         layer_loss_ops = [ build_layer_style_loss(N, P, S) for N, P, S in 

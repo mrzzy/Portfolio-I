@@ -67,6 +67,8 @@ class TransfuseGraph:
         
         # Setup tensorboard
         self.summary_op = tf.summary.merge_all()
+        self.writer = tf.summary.FileWriter("./logs/{}-{}".format(
+            self.settings, datetime.now().strftime("%H:%M:%S")))
 
         self.session = K.get_session()
 
@@ -74,7 +76,7 @@ class TransfuseGraph:
 # epoch number i_epoch and feed dict to run the graph
 def callback_tensorboard(graph, feed, i_epoch):
     summary = graph.session.run(graph.summary_op, feed_dict=feed)
-    writer.add_summary(summary, i)
+    graph.writer.add_summary(summary, i_epoch)
 
 # Callback for display progress infomation given transfuse graph and current
 # epoch number i_epoch and feed dict to run the graph
@@ -151,7 +153,8 @@ if __name__ == "__main__":
     }
 
     pastiche_image = transfer_style(content_image, style_image, settings=settings,
-                                    callbacks=[callback_pastiche, callback_progress],
+                                    callbacks=[callback_pastiche, callback_progress, 
+                                               callback_tensorboard],
                                     callback_step=20)
     
     pastiche_image.save("pastiche.jpg")
