@@ -60,10 +60,9 @@ class TransfuseGraph:
                                           self.style_op, self.settings)
     
         # Setup optimisation
-        # Adam hyperparameters borrowed from jcjohnson/neural-style
-        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.settings["learning_rate"],
-                                           beta1=0.99, epsilon = 1e-1)
-        self.train_op = self.optimizer.minimize(self.loss_op, var_list=[self.pastiche_op])
+        self.optimizer = tf.contrib.opt.ScipyOptimizerInterface(
+            self.loss_op, method='L-BFGS-B', options={'maxiter': 1}, 
+            var_list=[self.pastiche_op])
         
         # Setup tensorboard
         self.summary_op = tf.summary.merge_all()
@@ -75,7 +74,7 @@ class TransfuseGraph:
     # Perform one iteration of style transfer using the inputs in feed dic
     def transfer(self, feed):
         # Perform training setup
-        self.session.run(self.train_op, feed_dict=feed)
+        self.optimizer.minimize(self.session, feed_dict=feed)
         
 # Callback for writing tensorboard infomation given transfuse graph and current
 # epoch number i_epoch and feed dict to run the graph
@@ -88,7 +87,6 @@ def callback_tensorboard(graph, feed, i_epoch):
 def callback_progress(graph, feed, i_epoch):
     loss = graph.session.run(graph.loss_op, feed_dict=feed)
     print("[{}/{}] loss: {:e}".format(i_epoch, graph.settings["n_epochs"], loss))
-
     
 # Callback to display current pastiche given transfuse graph and current
 # epoch number i_epoch and feed dict to run the graph
