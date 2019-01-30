@@ -61,9 +61,9 @@ class TransfuseGraph:
     
         # Setup optimisation
         # Adam hyperparameters borrowed from jcjohnson/neural-style
-        optimizer = tf.train.AdamOptimizer(learning_rate=self.settings["learning_rate"],
+        self.optimizer = tf.train.AdamOptimizer(learning_rate=self.settings["learning_rate"],
                                            beta1=0.99, epsilon = 1e-1)
-        self.train_op = optimizer.minimize(self.loss_op, var_list=[self.pastiche_op])
+        self.train_op = self.optimizer.minimize(self.loss_op, var_list=[self.pastiche_op])
         
         # Setup tensorboard
         self.summary_op = tf.summary.merge_all()
@@ -71,7 +71,12 @@ class TransfuseGraph:
             self.settings, datetime.now().strftime("%H:%M:%S")))
 
         self.session = K.get_session()
-
+        
+    # Perform one iteration of style transfer using the inputs in feed dic
+    def transfer(self, feed):
+        # Perform training setup
+        self.session.run(self.train_op, feed_dict=feed)
+        
 # Callback for writing tensorboard infomation given transfuse graph and current
 # epoch number i_epoch and feed dict to run the graph
 def callback_tensorboard(graph, feed, i_epoch):
@@ -130,9 +135,9 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
         clipped_pastiche_op = tf.clip_by_value(graph.pastiche_op, 
                                                min_limits, max_limits)
         graph.pastiche_op.assign(clipped_pastiche_op)
-
-        # Perform training setup
-        session.run(graph.train_op, feed_dict=feed)
+        
+        # Perform style transfer
+        graph.transfer(feed)
     
         # Call callbacks
         if i_epoch % callback_step == 0:
@@ -149,7 +154,8 @@ if __name__ == "__main__":
     style_image = Image.open("data/stary_night.jpg")
     
     settings = {
-        "image_shape": (32, 32, 3)
+        "image_shape": (32, 32, 3),
+        "n_epochs": 100
     }
 
     pastiche_image = transfer_style(content_image, style_image, settings=settings,
