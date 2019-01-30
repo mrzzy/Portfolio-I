@@ -23,6 +23,11 @@ app.get('/edit', (request, response) => {
     response.sendFile(__dirname + "/public/edit.html");
 });
 
+app.get('/credit', (request, response) => {
+    response.sendFile(__dirname + "/public/credit.html");
+});
+
+
 /* Error Handling Middleware
  * Handles exceptions thrown in route handlers
  * Logs the exception
