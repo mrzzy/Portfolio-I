@@ -13,7 +13,7 @@ const serverURL = "http://localhost:8989";
 function buildTransferRequest(contentData, styleData, settings={}) {
     // Base 64 encode image data for transmission
     // TODO: remove hardcoded settings
-    settings.n_epochs = 100;
+    settings.n_epochs = 2;
     return JSON.stringify({
         content_image: window.btoa(contentData),
         style_image: window.btoa(styleData),
@@ -27,8 +27,6 @@ function buildTransferRequest(contentData, styleData, settings={}) {
 */
 function sendTransferRequest(contentData, styleData, settings, onResponse) {
     const requestJSON = buildTransferRequest(contentData, styleData, settings);
-    console.log(requestJSON);
-    console.log(settings);
 
     // Send style transfer request
     fetch("http://localhost:8989/api/style", {

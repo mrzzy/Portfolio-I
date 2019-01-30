@@ -84,10 +84,19 @@ $(document).ready(() => {
                 sendTransferRequest(styleData, contentData, {}, (transferResponse) => {
                     // Wait for style transfer to complete on server
                     const taskID = transferResponse.id
-                    console.log("Registered task:" + taskID);
+                    ccontentFileInputonsole.log("Registered task:" + taskID);
 
-                    window.setInterval(() => {
-                        checkTransferProgress(taskID, (progress) => console.log(progress));
+                    const intervalToken =  window.setInterval(() => {
+                        checkTransferProgress(taskID, (progress) => {
+                            console.log(progress);
+                            if(progress == 1.0) {
+                                // Style transfer completed
+                                // Show Pastiche on webpage 
+                                console.log("image url: "+ serverURL + 
+                                    "/api/pastiche/" + taskID);
+                                window.clearInterval(intervalToken);
+                            }
+                        });
                     }, 1000);
                 });
             });
