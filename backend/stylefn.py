@@ -15,7 +15,7 @@ from datetime import datetime
 from keras.models import Model
 from util import apply_settings
 from keras.layers import InputLayer
-from keras.applications.vgg19 import VGG19
+from keras.applications.vgg16 import VGG16
 
 # Style Transfer Function settings
 # NOTE: the following are default settings and may be overriden
@@ -23,14 +23,13 @@ SETTINGS = {
     "image_shape": (512, 512, 3),
 
     # Loss computation weights
-    "content_weight": 1e+6,
-    "style_weight": 4e+2,
-    "denoise_weight": 2e-3,
+    "content_weight": 1,
+    "style_weight": 1e0,
+    "denoise_weight": 0e0,
 
     # Layers for feature extraction
     "content_layers": ['block3_conv3'],
-    "style_layers": ['block1_conv2', 'block2_conv1', 'block3_conv1', 'block4_conv1',
-                  'block5_conv1'],
+    "style_layers": [ 'block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1'],
     "denoising_layers": [ "input_1" ]
 }
 
@@ -99,7 +98,7 @@ def deprocess_image(img_mat, shape):
 def build_extractor(layer_names, shape):
     with tf.name_scope("feature_extractor"):
         # Load VGG model
-        vgg_model = VGG19(input_shape=shape, weights="imagenet", include_top=False)
+        vgg_model = VGG16(input_shape=shape, weights="imagenet", include_top=False)
         vgg_model.trainable = False
 
         # Build  model by extracting  feature tensors
@@ -191,7 +190,7 @@ def build_style_loss(pastiche_op, style_op, style_layers, style_weight):
                               pastiche_feature_ops, style_feature_ops) ]
     
         # Compute total style loss accross layers
-        loss_op = tf.multiply(style_weight, tf.reduce_mean(layer_loss_ops), 
+        loss_op = tf.multiply(style_weight, tf.reduce_sum(layer_loss_ops), 
                               name="style_loss")
         # Track content loss with tensorboard
         loss_summary = tf.summary.scalar("style_loss", loss_op)

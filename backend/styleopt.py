@@ -27,7 +27,7 @@ SETTINGS = {
 
     # Optimisation settings
     "learning_rate": 10,
-    "n_epochs": 1000,
+    "n_epochs": 100,
 }
 
 # Represents the computational graph that will perform style transfer using the 
@@ -61,7 +61,7 @@ class TransfuseGraph:
     
         # Setup optimisation
         self.optimizer = tf.contrib.opt.ScipyOptimizerInterface(
-            self.loss_op, method='L-BFGS-B', options={'maxiter': 1}, 
+            self.loss_op, method='L-BFGS-B', options={'maxfun': 20}, 
             var_list=[self.pastiche_op])
         
         # Setup tensorboard
@@ -120,7 +120,8 @@ def transfer_style(content_image, style_image, settings={}, callbacks=[], callba
     max_limits = 255.0 - stylefn.IMG_BGR_MEAN
 
     # Build style transfer graph
-    pastiche_init = np.random.uniform(size=image_shape) * 255.0 - 127.5
+    #pastiche_init = np.random.uniform(size=image_shape) * 255.0 - 127.5
+    pastiche_init = content
     graph = TransfuseGraph(pastiche_init=pastiche_init, settings=settings)
     session = graph.session
     session.run(tf.global_variables_initializer())
