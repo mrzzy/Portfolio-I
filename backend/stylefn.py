@@ -24,8 +24,8 @@ SETTINGS = {
 
     # Loss computation weights
     "content_weight": 1,
-    "style_weight": 1e0,
-    "denoise_weight": 0e0,
+    "style_weight": 1e8,
+    "denoise_weight": 1e-6,
 
     # Layers for feature extraction
     "content_layers": ['block2_conv2'],
@@ -147,10 +147,13 @@ def build_content_loss(pastiche_op, content_op, content_layers, content_weight):
         # dimension
         pastiche_feature_op = tf.squeeze(pastiche_feature_ops[0])
         content_feature_op = tf.squeeze(content_feature_ops[0])
+
+        # Compute scale factor H * W * C
+        height, width, n_channels = pastiche_feature_op.shape.as_list()
+        #scale_factor = float(height * width * n_channels)
+        scale_factor = 1
         
         # Compute content loss
-        # NOTE: scale factor has been disabled
-        scale_factor = 1.0
         loss_op = tf.multiply(content_weight / scale_factor,
                               tf.reduce_sum(tf.squared_difference(
                                   pastiche_feature_ops, content_feature_ops)),
@@ -185,20 +188,21 @@ def build_style_loss(pastiche_op, style_op, style_layers, style_weight):
         
         # Build and return style layer loss tensor for each leyer
         def build_layer_style_loss(pastiche_feature_op, style_feature_op, layer_name):
-            # Extract style features by computing gram matrix representations
-            pasitche_gram_op = build_gram_matrix(pastiche_feature_op)
-            style_gram_op = build_gram_matrix(style_feature_op)
-            
-            # Compute scale factor 4 * M^2 * N^2
+            # Compute scale factor N ** 2 * M ** 2
             height, width, n_channels = pastiche_feature_op.shape.as_list()
-            scale_factor = 4.0 * ((height * width) ** 2) * (n_channels ** 2)
+            scale_factor = float(4.0 * ((height * width) ** 2) * (n_channels ** 2))
+
+            # Extract style features by computing gram matrix representations
+            pastiche_gram_op = build_gram_matrix(pastiche_feature_op)
+            style_gram_op = build_gram_matrix(style_feature_op)
 
             # Compute style loss for layer
-            layer_loss_op = tf.divide(tf.reduce_sum(
-                tf.squared_difference(pastiche_feature_op, style_feature_op)),
+            layer_loss_op = tf.divide(
+                tf.reduce_sum(
+                    tf.squared_difference(pastiche_gram_op, style_gram_op)),
                 scale_factor, name="layer_loss_" + layer_name)
             
-            return scale_factor
+            return layer_loss_op
 
         # Compute style loss for each layer
         layer_loss_ops = [ build_layer_style_loss(P, S, N) for P, S, N in
@@ -258,9 +262,3 @@ def build_loss(pastiche_op, content_op, style_op, settings={}):
         loss_summary = tf.summary.scalar("style_transfer_loss", loss_op)
         
         return loss_op
-    
-if __name__ == "__main__":
-    style_op = K.placeholder((512, 512, 3))
-    pastiche_op = K.placeholder((512, 512, 3))
-    layers = [ 'block1_conv1', 'block2_conv1', 'block3_conv1', 'block4_conv1', 'block5_conv1']
-    build_style_loss(pastiche_op, style_op, layers, 1.0)
